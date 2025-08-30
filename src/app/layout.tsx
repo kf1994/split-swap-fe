@@ -1,15 +1,15 @@
 // app/layout.tsx
 import "../styles/globals.css"
 import 'react-modern-drawer/dist/index.css'
-
 import { Poppins, Krub } from "next/font/google"
 import type { Metadata } from "next"
 import { MainLayout } from "@layouts"
 import { ThemeProvider } from "next-themes"
 import type React from "react"
+import {RootProviders} from "../../@next/components/providers/root-providers/root-providers";
+
 
 const poppins = Poppins({ subsets: ["latin"], weight: "400" })
-// const krub = Krub({ subsets: ["latin"], weight: "400" })
 
 interface RootLayoutProps {
   children: React.ReactNode
@@ -21,19 +21,14 @@ const RootLayout = async ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <main
-            className="main-bg"
-            style={{ minWidth: 375, minHeight: "100vh" }}
-          >
-            <MainLayout>{children}</MainLayout>
-          </main>
-        </ThemeProvider>
+          <RootProviders>
+            <main
+              className="main-bg"
+              style={{ minWidth: 375, minHeight: "100vh" }}
+            >
+              <MainLayout>{children}</MainLayout>
+            </main>
+          </RootProviders>
       </body>
     </html>
   )

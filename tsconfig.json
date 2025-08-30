@@ -54,6 +54,9 @@
       "@utils": [
         "./@next/utils"
       ],
+      "@config": [
+        "./@next/config"
+      ],
       "@ApiReq": [
         "./@next/ApiReq"
       ],
