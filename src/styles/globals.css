@@ -73,3 +73,18 @@
     border: 12px solid #2E3349 ;
     background: #383D56;
 }
+
+.thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+    background: #444A66;
+    border-radius: 4px;
+}
+.thin-scrollbar {
+    scrollbar-width: thin;       /* Firefox */
+    scrollbar-color: #444A66 transparent;
+}
