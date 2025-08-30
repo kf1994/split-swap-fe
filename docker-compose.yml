@@ -1,0 +1,15 @@
+services:
+
+  tariff-fe:
+    build:
+      context: .
+    image: tariff-fe:latest
+    container_name: tariff-fe
+    ports:
+      - '3024:3000'
+    networks:
+      - maxbid-network
+
+networks:
+  maxbid-network:
+

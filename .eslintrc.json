@@ -1,0 +1,88 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "prettier",
+    "plugin:react/jsx-runtime",
+    "plugin:react/recommended",
+    "standard-with-typescript",
+    "plugin:@next/next/recommended",
+    "next/core-web-vitals"
+  ],
+  "overrides": [],
+  "parserOptions": {
+    "project": [
+      "./tsconfig.json"
+    ],
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "prettier",
+    "@typescript-eslint"
+  ],
+  "ignorePatterns": [
+    "src/proto/**/*.js",
+    "jest.setup.js",
+    "jest.config.js",
+    "__mocks__/*"
+  ],
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto",
+        "trailingComma": "none",
+        "semi": false
+      }
+    ],
+    "@typescript-eslint/quotes": [
+      "error",
+      "double",
+      {
+        "avoidEscape": true,
+        "allowTemplateLiterals": true
+      }
+    ],
+    "indent": "off",
+    "multiline-ternary": "off",
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-page-custom-font": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/indent": "off",
+    "space-before-function-paren": "off",
+    "@typescript-eslint/space-before-function-paren": "off",
+    "@typescript-eslint/member-delimiter-style": "off",
+    "arrow-spacing": "error",
+    "strict": "error",
+    "no-alert": "error",
+    "no-dupe-args": "error",
+    "comma-dangle": "error",
+    "comma-style": "error",
+    "comma-spacing": "error",
+    "space-in-parens": "error",
+    "space-infix-ops": "error",
+    "space-unary-ops": "error",
+    "space-before-blocks": "error",
+    "key-spacing": "error",
+    "template-curly-spacing": "error",
+    "semi-spacing": "error",
+    "switch-colon-spacing": "error",
+    "func-call-spacing": "error",
+    "curly": "error",
+    "object-curly-spacing": "error",
+    "array-bracket-spacing": "error",
+    "keyword-spacing": "error",
+    "no-dupe-keys": "error",
+    "no-multi-spaces": "error",
+    "no-undefined": "off",
+    "@typescript-eslint/no-throw-literal": "off"
+  }
+}
+

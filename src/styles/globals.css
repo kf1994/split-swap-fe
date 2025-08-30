@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+.background-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover; /* Ensures the video covers the entire area */
+    z-index: -1; /* Puts the video behind other content */
+}
+
+.app-container {
+    position: relative;
+    min-height: 100vh;
+}
+
+.header-parent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+}
+
+.paragraph {
+    color:white;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+}
+
+.swap-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    background: linear-gradient(150deg, rgba(44, 48, 73, 0.90) 6.43%, rgba(24, 28, 51, 0.90) 99.07%);
+    backdrop-filter: blur(3px);
+    border: 1px solid #FFF;
+}
+
+.swapper-icon-bg {
+    background: linear-gradient(150deg, rgba(44, 48, 73, 0.90) 6.43%, rgba(24, 28, 51, 0.90) 99.07%);
+}
+
+.swapper-icon {
+    position: absolute;
+    left: 245px;
+    top: 190px;
+    display: flex;
+    padding: 8px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius:24px;
+    border: 12px solid #2E3349 ;
+    background: #383D56;
+}
