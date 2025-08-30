@@ -30,9 +30,11 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
     const [selectedTokens, setSelectedTokens] = useState<string[]>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    const selectedToken = selectedTokens.length > 0
-        ? tokens.find((t) => t.symbol === selectedTokens[selectedTokens.length - 1])
-        : undefined
+    // Button shows the last picked token
+    const selectedToken =
+        selectedTokens.length > 0
+            ? tokens.find((t) => t.symbol === selectedTokens[selectedTokens.length - 1])
+            : undefined
 
     const filteredTokens = tokens.filter(
         (t) =>
@@ -56,17 +58,15 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
     }, [open])
 
     const handleSelect = (symbol: string) => {
-        if (!selectedTokens.includes(symbol)) {
-            const updated = [...selectedTokens, symbol]
-            setSelectedTokens(updated)
-            onSelect(updated)
-        }
+        const updated = [...selectedTokens, symbol] // ✅ allow duplicates
+        setSelectedTokens(updated)
+        onSelect(updated)
         setOpen(false)
         setSearch("")
     }
 
-    const handleRemove = (symbol: string) => {
-        const updated = selectedTokens.filter((s) => s !== symbol)
+    const handleRemove = (index: number) => {
+        const updated = selectedTokens.filter((_, i) => i !== index) // remove by index
         setSelectedTokens(updated)
         onSelect(updated)
     }
@@ -93,7 +93,7 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
 
             {/* Dropdown Panel */}
             {open && (
-                <div className="absolute flex flex-col gap-2.5 p-3 z-50 mt-2 w-[380px] max-h-[400px] bg-[#2E334D] swapper-icon-bg rounded-2xl overflow-hidden">
+                <div className="absolute flex flex-col gap-2.5 p-3 z-50 mt-2 w-[380px] max-h-[400px] bg-[#2E334D] rounded-2xl overflow-hidden">
                     <p className="text-[22px] flex items-center gap-8 font-bold text-white">
             <span onClick={() => setOpen(false)}>
               <ArrowLeftIcon />
@@ -112,24 +112,24 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                         />
                     </div>
 
-                    {/* ✅ Selected tokens as pills (under input) */}
+                    {/* ✅ Selected tokens as pills (duplicates allowed) */}
                     {selectedTokens.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedTokens.map((s) => {
+                            {selectedTokens.map((s, idx) => {
                                 const token = tokens.find((t) => t.symbol === s)
                                 return (
                                     <span
-                                        key={s}
+                                        key={idx} // use index, not symbol (to allow duplicates)
                                         className="flex items-center gap-1 bg-[#383D56] text-white text-sm px-2 py-1 rounded-lg"
                                     >
-                    {token?.symbol}
+                                        {token?.symbol}
                                         <button
                                             className="ml-1 text-[#A6A0BB] hover:text-white"
-                                            onClick={() => handleRemove(s)}
+                                            onClick={() => handleRemove(idx)}
                                         >
-                      ✕
-                    </button>
-                  </span>
+                                            ✕
+                                        </button>
+                                    </span>
                                 )
                             })}
                         </div>
@@ -148,14 +148,14 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                                     <div className="flex gap-2">
                                         <span className="text-white text-[16px] font-bold">{token.symbol}</span>
                                         <span className="bg-[#383D56] rounded-[4px] px-1 uppercase text-[#A6A0BB] text-[12px] font-normal flex items-center">
-                      {token.chain}
-                    </span>
+                                            {token.chain}
+                                        </span>
                                     </div>
                                     <span className="text-[14px] font-normal text-[#A6A0BB]">{token.name}</span>
                                 </div>
                                 <span className="ml-auto ">
-                  <StarIcon />
-                </span>
+                                    <StarIcon />
+                                </span>
                             </button>
                         ))}
 
