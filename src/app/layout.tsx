@@ -1,5 +1,7 @@
 // app/layout.tsx
 import "../styles/globals.css"
+import 'react-modern-drawer/dist/index.css'
+
 import { Poppins, Krub } from "next/font/google"
 import type { Metadata } from "next"
 import { MainLayout } from "@layouts"

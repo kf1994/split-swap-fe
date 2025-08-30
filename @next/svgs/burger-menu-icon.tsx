@@ -1,0 +1,17 @@
+import React from "react";
+
+export const BurgerMenuIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="8"
+        viewBox="0 0 12 8"
+        fill="none"
+        {...props}
+    >
+        <path
+            d="M0 8H12V6.66667H0V8ZM0 4.66667H12V3.33333H0V4.66667ZM0 0V1.33333H12V0H0Z"
+            fill="white"
+        />
+    </svg>
+);
