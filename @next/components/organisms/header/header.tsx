@@ -47,7 +47,20 @@ export const Header: React.FC = () => {
                     <p className={"paragraph"} onClick={() => setVisible(true)}>Connect wallet</p>
                 </button>
             }
-            {/* Theme Toggle (Both icons always visible) */}
+
+            {connected &&
+                <button
+                    className="flex items-center justify-center gap-2 px-6 py-3 text-white font-medium cursor-pointer"
+                    style={{
+                        borderRadius: "16px",
+                        border: "1px solid #FFF",
+                        background:
+                            "linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)"
+                    }}
+                >
+                    <WalletIcon /> <p className={"text-[16px] font-bold"}>{publicKey?.toBase58().slice(0, 4) + '...' + publicKey?.toBase58().slice(-4)}</p>
+                </button>
+            }
             <button
                 onClick={() => {
                     setTheme(theme === "light" ? "dark" : "light")
@@ -88,7 +101,9 @@ export const Header: React.FC = () => {
                   <HistoryIcon/>
                   <p className={"text-white text-[14px] font-normal"}>History</p>
               </div>
-              <div className={"flex gap-2 items-center cursor-pointer"} onClick={disconnect()}>
+              <div className={"flex gap-2 items-center cursor-pointer"} onClick={()=> {
+                  disconnect()
+              }}>
                   <LogoutIcon />
                   <p className={"text-white text-[14px] font-normal cursor-pointer"}>Disconnect wallet</p>
               </div>
