@@ -1,6 +1,7 @@
 import type React from "react"
 import { NumericTokenInput } from "@atoms"
-import Image from "next/image" // example icon
+import Image from "next/image"
+import {TokenDropdown} from "../token-dropdown"; // example icon
 
 interface SwapInputBoxProps {
   label: string
@@ -20,6 +21,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
   selectedToken,
   onTokenChange
 }) => {
+
   return (
     <div className="bg-[#383D56] rounded-xl p-4 flex flex-col gap-3 w-full">
       {/* Header */}
@@ -57,27 +59,11 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
           connected={true}
         />
 
-        <div className="relative w-[168px]">
-          <select
-            value={selectedToken}
-            onChange={(e) => onTokenChange?.(e.target.value)}
-            className="appearance-none w-full bg-[#444A66] rounded-xl px-3 py-2 text-white text-[16px] font-bold pr-8" // extra pr-8 for arrow space
-          >
-            <option value="SOL">🔹 SOL</option>
-            <option value="BTC">🟠 BTC</option>
-            <option value="ETH">⚪ ETH</option>
-          </select>
-
-          {/* Custom dropdown icon (right aligned) */}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white">
-            <Image
-              src={"/images/arrow-down.svg"}
-              alt={"Arrow down"}
-              width={24}
-              height={24}
-            />
-          </span>
-        </div>
+        <TokenDropdown
+            onSelect={(val:string)=>{onTokenChange?.(val)}}
+           selected={selectedToken}
+        />
+          
       </div>
 
       <span className="text-xs text-gray-400">$12.2272</span>
