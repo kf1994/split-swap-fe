@@ -86,7 +86,7 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                         {selectedToken.symbol}
                     </div>
                 ) : (
-                    "Token"
+                    "Select"
                 )}
                 <Image src={"/images/arrow-down.svg"} alt="arrow" width={16} height={16} />
             </button>
