@@ -21,23 +21,26 @@ const tokens: Token[] = [
 
 interface TokenDropdownProps {
     selected?: string
-    onSelect: (symbol: string) => void
+    onSelect: (symbols: string[]) => void
 }
 
 export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect }) => {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState("")
+    const [selectedTokens, setSelectedTokens] = useState<string[]>([])
     const dropdownRef = useRef<HTMLDivElement>(null)
-    const [searchItems, setSearchItems] = useState([])
 
-    const selectedToken = tokens.find((t) => t.symbol === selected)
+    const selectedToken = selectedTokens.length > 0
+        ? tokens.find((t) => t.symbol === selectedTokens[selectedTokens.length - 1])
+        : undefined
+
     const filteredTokens = tokens.filter(
         (t) =>
             t.symbol.toLowerCase().includes(search.toLowerCase()) ||
             t.name.toLowerCase().includes(search.toLowerCase())
     )
 
-    // ✅ Close dropdown on outside click
+    // Close dropdown on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -51,6 +54,22 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
             document.removeEventListener("mousedown", handleClickOutside)
         }
     }, [open])
+
+    const handleSelect = (symbol: string) => {
+        if (!selectedTokens.includes(symbol)) {
+            const updated = [...selectedTokens, symbol]
+            setSelectedTokens(updated)
+            onSelect(updated)
+        }
+        setOpen(false)
+        setSearch("")
+    }
+
+    const handleRemove = (symbol: string) => {
+        const updated = selectedTokens.filter((s) => s !== symbol)
+        setSelectedTokens(updated)
+        onSelect(updated)
+    }
 
     return (
         <div className="relative w-[168px]" ref={dropdownRef}>
@@ -76,11 +95,12 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
             {open && (
                 <div className="absolute flex flex-col gap-2.5 p-3 z-50 mt-2 w-[380px] max-h-[400px] bg-[#2E334D] swapper-icon-bg rounded-2xl overflow-hidden">
                     <p className="text-[22px] flex items-center gap-8 font-bold text-white">
-                        <span onClick={() => setOpen(false)}>
-                          <ArrowLeftIcon />
-                        </span>{" "}
+            <span onClick={() => setOpen(false)}>
+              <ArrowLeftIcon />
+            </span>{" "}
                         Select a token
                     </p>
+
                     {/* Search */}
                     <div>
                         <input
@@ -92,18 +112,35 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                         />
                     </div>
 
+                    {/* ✅ Selected tokens as pills (under input) */}
+                    {selectedTokens.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedTokens.map((s) => {
+                                const token = tokens.find((t) => t.symbol === s)
+                                return (
+                                    <span
+                                        key={s}
+                                        className="flex items-center gap-1 bg-[#383D56] text-white text-sm px-2 py-1 rounded-lg"
+                                    >
+                    {token?.symbol}
+                                        <button
+                                            className="ml-1 text-[#A6A0BB] hover:text-white"
+                                            onClick={() => handleRemove(s)}
+                                        >
+                      ✕
+                    </button>
+                  </span>
+                                )
+                            })}
+                        </div>
+                    )}
+
                     {/* Token List */}
-                    <div
-                        className="max-h-[340px] flex flex-col gap-2 overflow-y-auto thin-scrollbar"
-                    >
+                    <div className="max-h-[340px] flex flex-col gap-2 overflow-y-auto thin-scrollbar">
                         {filteredTokens.map((token) => (
                             <button
                                 key={token.symbol}
-                                onClick={() => {
-                                    onSelect(token.symbol)
-                                    setOpen(false)
-                                    setSearch("")
-                                }}
+                                onClick={() => handleSelect(token.symbol)}
                                 className="flex items-center gap-3 w-full p-3 bg-[#444A66] rounded-[16px] text-left"
                             >
                                 <Image src={token.icon} alt={token.name} width={28} height={28} />
@@ -111,14 +148,14 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                                     <div className="flex gap-2">
                                         <span className="text-white text-[16px] font-bold">{token.symbol}</span>
                                         <span className="bg-[#383D56] rounded-[4px] px-1 uppercase text-[#A6A0BB] text-[12px] font-normal flex items-center">
-                                            {token.chain}
-                                        </span>
+                      {token.chain}
+                    </span>
                                     </div>
                                     <span className="text-[14px] font-normal text-[#A6A0BB]">{token.name}</span>
                                 </div>
                                 <span className="ml-auto ">
-                                    <StarIcon />
-                                </span>
+                  <StarIcon />
+                </span>
                             </button>
                         ))}
 
@@ -131,4 +168,3 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
         </div>
     )
 }
-
