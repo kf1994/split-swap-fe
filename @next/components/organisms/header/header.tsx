@@ -7,7 +7,7 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import Image from "next/image"
 import useMediaQuery from "use-media-antd-query";
-import {Drawer} from "@atoms";
+import {CustomButton, Drawer} from "@atoms";
 
 
 export const Header: React.FC = () => {
@@ -61,17 +61,10 @@ export const Header: React.FC = () => {
         {!isMbl && <div style={{display: "flex", gap: "8px"}}>
             {/* Connect Wallet */}
             {!connected &&
-                <button
-                    className="flex items-center justify-center gap-2 px-6 py-3 text-white font-medium"
-                    style={{
-                        borderRadius: "16px",
-                        border: "1px solid #FFF",
-                        background:
-                            "linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)"
-                    }}
-                >
-                    <p className={"paragraph"} onClick={() => setVisible(true)}>Connect wallet</p>
-                </button>
+                <CustomButton className={"h-[48px]"} onClick={() => setVisible(true)}>
+                    <WalletIcon width={16} height={16} />
+                    Connect Wallet
+                </CustomButton>
             }
 
             {connected && (
