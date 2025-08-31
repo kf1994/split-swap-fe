@@ -120,6 +120,7 @@ export const Header: React.FC = () => {
                     )}
                 </div>
             )}
+
             <button
                 onClick={() => {
                     setTheme(theme === "light" ? "dark" : "light")
