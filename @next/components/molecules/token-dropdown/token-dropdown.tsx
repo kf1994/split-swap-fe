@@ -3,15 +3,11 @@
 import React, { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { ArrowLeftIcon, StarIcon } from "@svgs"
+import {userProfileStore} from "../../../store/use-profile-store";
+import {useShallow} from "zustand/react/shallow";
+import {TokenInterface} from "@types";
 
-interface Token {
-    symbol: string
-    name: string
-    icon: string
-    chain?: string
-}
-
-const tokens: Token[] = [
+export const tokens: TokenInterface[] = [
     { symbol: "SOL", name: "Solana", icon: "/images/sol.png", chain: "Solana" },
     { symbol: "USDT", name: "USDT", icon: "/images/usdt.png", chain: "Solana" },
     { symbol: "BTC", name: "Bitcoin", icon: "/images/btc.png", chain: "Bitcoin" },
@@ -19,22 +15,19 @@ const tokens: Token[] = [
     { symbol: "BONK", name: "Bonk", icon: "/images/bonk.png", chain: "Base" },
 ]
 
+
+
 interface TokenDropdownProps {
-    selected?: string
-    onSelect: (symbols: string[]) => void
+    // selectedTokens: string[]
+    // setSelectedTokens?: (val:string[]) => void
+    // onSelect: (symbols: string[]) => void
 }
 
-export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect }) => {
-    const [open, setOpen] = useState(false)
+export const TokenDropdown: React.FC<TokenDropdownProps> = () => {
     const [search, setSearch] = useState("")
-    const [selectedTokens, setSelectedTokens] = useState<string[]>([])
-    const dropdownRef = useRef<HTMLDivElement>(null)
-
-    // Button shows the last picked token
-    const selectedToken =
-        selectedTokens.length > 0
-            ? tokens.find((t) => t.symbol === selectedTokens[selectedTokens.length - 1])
-            : undefined
+    const [selectedTokens, setSelectedTokens, setSelectedToken, setCurrentState] = userProfileStore(
+        useShallow((s) => [s.selectedTokens, s.setSelectedTokens, s.setSelectedToken,s.setCurrentState])
+    )
 
     const filteredTokens = tokens.filter(
         (t) =>
@@ -42,62 +35,28 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
             t.name.toLowerCase().includes(search.toLowerCase())
     )
 
-    // Close dropdown on outside click
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setOpen(false)
-            }
-        }
-        if (open) {
-            document.addEventListener("mousedown", handleClickOutside)
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside)
-        }
-    }, [open])
-
     const handleSelect = (symbol: string) => {
         const updated = [...selectedTokens, symbol] // ✅ allow duplicates
-        setSelectedTokens(updated)
-        onSelect(updated)
-        setOpen(false)
+        setSelectedTokens?.(updated)
+        // onSelect(updated)
+        setCurrentState?.("1")
         setSearch("")
     }
 
     const handleRemove = (index: number) => {
-        const updated = selectedTokens.filter((_, i) => i !== index) // remove by index
-        setSelectedTokens(updated)
-        onSelect(updated)
+        const updated = selectedTokens?.filter((_, i) => i !== index) // remove by index
+        if (updated && updated.length >0 ) {
+            setSelectedTokens?.(updated)
+            // onSelect(updated)
+        }
     }
 
     return (
-        <div className="relative w-[168px]" ref={dropdownRef}>
-            {/* Button */}
-            <button
-                onClick={() => setOpen(!open)}
-                className={`w-full flex items-center justify-between bg-[#444A66] px-3 py-2 rounded-xl text-white ${
-                    selectedToken ? "font-bold" : "font-normal"
-                }`}
-            >
-                {selectedToken ? (
-                    <div className="flex items-center gap-2">
-                        <Image src={selectedToken.icon} alt={selectedToken.name} width={24} height={24} />
-                        {selectedToken.symbol}
-                    </div>
-                ) : (
-                    "Select"
-                )}
-                <Image src={"/images/arrow-down.svg"} alt="arrow" width={16} height={16} />
-            </button>
-
-            {/* Dropdown Panel */}
-            {open && (
-                <div className="absolute flex flex-col gap-2.5 p-3 z-50 mt-2 w-[380px] max-h-[400px] bg-[#2E334D] rounded-2xl overflow-hidden">
+        <div className="absolute flex flex-col gap-2.5 p-3  mt-2 w-[343px] md:w-[530px]  max-h-[800px] bg-[#2E334D] rounded-2xl overflow-hidden">
                     <p className="text-[22px] flex items-center gap-8 font-bold text-white">
-            <span onClick={() => setOpen(false)}>
-              <ArrowLeftIcon />
-            </span>{" "}
+                        <span className={"cursor-pointer"} onClick={() => setCurrentState?.("1")}>
+                          <ArrowLeftIcon />
+                        </span>{" "}
                         Select a token
                     </p>
 
@@ -113,9 +72,9 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                     </div>
 
                     {/* ✅ Selected tokens as pills (duplicates allowed) */}
-                    {selectedTokens.length > 0 && (
+                    {selectedTokens && selectedTokens.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedTokens.map((s, idx) => {
+                            {selectedTokens?.map((s, idx) => {
                                 const token = tokens.find((t) => t.symbol === s)
                                 return (
                                     <span
@@ -140,7 +99,10 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                         {filteredTokens.map((token) => (
                             <button
                                 key={token.symbol}
-                                onClick={() => handleSelect(token.symbol)}
+                                onClick={() => {
+                                    handleSelect(token.symbol)
+                                    setSelectedToken(token)
+                                }}
                                 className="flex items-center gap-3 w-full p-3 bg-[#444A66] rounded-[16px] text-left"
                             >
                                 <Image src={token.icon} alt={token.name} width={28} height={28} />
@@ -164,7 +126,5 @@ export const TokenDropdown: React.FC<TokenDropdownProps> = ({ selected, onSelect
                         )}
                     </div>
                 </div>
-            )}
-        </div>
     )
 }

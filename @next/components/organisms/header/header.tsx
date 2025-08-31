@@ -94,7 +94,7 @@ export const Header: React.FC = () => {
 
                     {showDropdown && (
                         <div className="absolute right-0 mt-2 w-[260px] rounded-xl bg-[#A7ADBD] border border-[#DFE2EB] text-white shadow-lg p-3 flex flex-col gap-3 z-50">
-                            <div className="flex gap-2 justify-between items-center cursor-pointer bg-[#A7ADBD] border border-white rounded-[8px] px-3 py-2">
+                            <div className="flex gap-2 justify-between items-center cursor-pointer bg-[#A7ADBD] border border-[#DFE2EB] rounded-[8px] px-3 py-2">
                                 <p className="text-[16px] font-bold ">
                                     {slicedPubKey}
                                 </p>
