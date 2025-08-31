@@ -29,7 +29,7 @@ export const Drawer: React.FC<DrawerProps> = ({ open, onClose, children, title }
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed right-0 top-0 h-full w-[375px] drawer-bg blur-bg flex flex-col gap-3"
+                className="fixed right-0 top-0 h-full w-[375px] drawer-bg blur-bg flex flex-col"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 ">

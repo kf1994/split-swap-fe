@@ -5,6 +5,7 @@ import type React from "react"
 import { useTheme } from "next-themes"
 import { Header } from "@organisms"
 import { useEffect, useState } from "react"
+import {Footer} from "@atoms";
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({
   children
@@ -18,17 +19,16 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({
 
   if (!mounted) return null
 
-  const videoSrc = theme === "dark" ? "/mp4/dark-bg.mp4" : "/mp4/day-bg.mp4"
-
-  return (
-    <div className="app-container">
-      <VideoBackground />
-      <div className="content-overlay">
-        <Header />
-        <div>{children}</div>
-      </div>
-    </div>
-  )
+    return (
+        <div className="app-container relative min-h-screen flex flex-col">
+            <VideoBackground />
+            <div className="content-overlay flex flex-col flex-1">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+            </div>
+        </div>
+    )
 }
 
 export const VideoBackground = () => {

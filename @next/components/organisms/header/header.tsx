@@ -76,9 +76,9 @@ export const Header: React.FC = () => {
 
             {connected && (
                 <div className="relative" ref={dropdownRef}>
-                    <button
+                    <div
                         onClick={() => setShowDropdown((prev) => !prev)}
-                        className="flex items-center justify-center gap-2 px-6 py-3 text-white font-medium cursor-pointer"
+                        className="flex  items-center justify-center gap-2 px-6 py-3 text-white font-medium cursor-pointer"
                         style={{
                             borderRadius: "16px",
                             border: "1px solid #FFF",
@@ -90,12 +90,12 @@ export const Header: React.FC = () => {
                         <p className="text-[16px] font-bold">
                             {slicedPubKey}
                         </p>
-                    </button>
+                    </div>
 
                     {showDropdown && (
-                        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#A7ADBD] border border-[#DFE2EB] rounded-[8px] text-white shadow-lg p-3 flex flex-col gap-3 z-50">
-                            <div className="flex gap-2 justify-between items-center cursor-pointer">
-                                <p className="text-[16px] font-bold">
+                        <div className="absolute right-0 mt-2 w-[260px] rounded-xl bg-[#A7ADBD] border border-[#DFE2EB] text-white shadow-lg p-3 flex flex-col gap-3 z-50">
+                            <div className="flex gap-2 justify-between items-center cursor-pointer bg-[#A7ADBD] border border-white rounded-[8px] px-3 py-2">
+                                <p className="text-[16px] font-bold ">
                                     {slicedPubKey}
                                 </p>
                                 <div
@@ -150,12 +150,12 @@ export const Header: React.FC = () => {
           open={openDrawer}
           onClose={()=>{setIsOpenDrawer(false)}}
           title={
-              <Image src={"/images/split.svg"} alt={"split"} width={144} height={30}/>
+              <SplitLogo height={29}/>
              }
       >
           <div className={"flex flex-col gap-3"}>
               {connected &&
-                  <div className={"bg-[#383D56] p-4 flex justify-between rounded-lg"}>
+                  <div className={"bg-[#383D56] pt-3  pb-3 flex justify-between rounded-lg"}>
                       <p className={"text-[16px] font-bold text-white"}>{ slicedPubKey}</p>
                       <div onClick={onCopy}>
                         <WalletIcon/>
@@ -163,12 +163,12 @@ export const Header: React.FC = () => {
                   </div>
               }
               {!connected &&
-                  <div className={"flex gap-2 items-center"} onClick={()=> {setVisible(true)}}>
+                  <div className={"flex gap-2 pt-3  pb-3 items-center"} onClick={()=> {setVisible(true)}}>
                       <WalletIcon width={16} height={16}/>
                       <p className={"text-white text-[14px] font-normal cursor-pointer"}>Connect Wallet</p>
                   </div>
               }
-              <div className={"flex gap-2 items-center cursor-pointer"}>
+              <div className={"flex gap-2 pt-3 pb-3 items-center cursor-pointer"}>
                   <HistoryIcon/>
                   <p className={"text-white text-[14px] font-normal"}>History</p>
               </div>
