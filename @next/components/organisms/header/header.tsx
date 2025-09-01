@@ -8,10 +8,12 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import Image from "next/image"
 import useMediaQuery from "use-media-antd-query";
 import {CustomButton, Drawer} from "@atoms";
+import { useRouter } from "next/navigation"
 
 
 export const Header: React.FC = () => {
   const { theme, setTheme } = useTheme()
+    const router = useRouter()
   const { wallets,connected, disconnect, publicKey } = useWallet()
   const { setVisible } = useWalletModal()
   const colSize = useMediaQuery()
@@ -40,7 +42,7 @@ export const Header: React.FC = () => {
     }, [])
 
     const onCopy = () => {
-        navigator.clipboard.writeText(publicKey?.toBase58())
+        navigator.clipboard.writeText(publicKey ? publicKey?.toBase58():"")
         setCopyLabel("Copied!")
         setTimeout(() => {
             setCopyLabel("Copy")
@@ -60,7 +62,7 @@ export const Header: React.FC = () => {
       {/* Right Section */}
         {!isMbl &&
             <div className={"flex gap-2 items-center"}>
-                {connected && <p className={"text-[16px] font-bold flex text-white items-center"}>History </p>}
+                {connected && <p className={"text-[16px] cursor-pointer font-bold flex text-white items-center"} onClick={()=>{router.push("/history")}}>History </p>}
                 {/* Connect Wallet */}
                 {!connected &&
                     <CustomButton variant={"connect"} disabled={false} className={"flex items-center  h-[48px]"} onClick={() => setVisible(true)}>
@@ -166,7 +168,7 @@ export const Header: React.FC = () => {
               }
               <div className={"flex gap-2 pt-3 pb-3 items-center cursor-pointer"}>
                   <HistoryIcon/>
-                  <p className={"text-white text-[14px] font-normal"}>History</p>
+                  <p className={"text-white text-[14px] cursor-pointer font-normal"}>History</p>
               </div>
               <div className={"flex gap-2 items-center cursor-pointer"} onClick={()=> {
                   disconnect()

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@next/font": "^14.2.7",
+    "@radix-ui/react-avatar": "^1.1.10",
     "@reduxjs/toolkit": "^2.2.7",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@solana/wallet-adapter-react-ui": "^0.9.35",
