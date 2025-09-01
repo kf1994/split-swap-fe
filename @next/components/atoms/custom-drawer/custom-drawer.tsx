@@ -34,7 +34,7 @@ export const Drawer: React.FC<DrawerProps> = ({ open, onClose, children, title }
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 ">
                     <div className="text-lg font-semibold">{title}</div>
-                    <button onClick={onClose} className="p-2 border border-white icon-bg rounded-full">
+                    <button onClick={onClose} className="p-2 relative bottom-[7px] border bg-[linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)] icon-bg rounded-full">
                         <CrossIcon />
                     </button>
                 </div>

@@ -6,6 +6,7 @@ import { SendSwap } from "../../../molecules/send-swap/send-swap"
 import useMediaQuery from "use-media-antd-query"
 import {userProfileStore} from "../../../../store/use-profile-store";
 import {useShallow} from "zustand/react/shallow";
+import {CustomButton} from "@atoms";
 
 export const SwapContainer: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"swap" | "send">("swap")
@@ -86,10 +87,10 @@ export const SwapContainer: React.FC = () => {
                   />
 
                   {/* Swap CTA */}
-                  <button
-                      className="w-full mt-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90">
+                  <CustomButton
+                      className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl">
                     Swap
-                  </button>
+                  </CustomButton>
                 </>
             )}
 

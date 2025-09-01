@@ -62,8 +62,8 @@
 
 .swapper-icon {
     position: absolute;
-    left: 245px;
-    top: 200px;
+    /*left: 245px;*/
+    top: 213px;
     display: flex;
     padding: 8px;
     justify-content: center;
@@ -87,4 +87,15 @@
 .thin-scrollbar {
     scrollbar-width: thin;       /* Firefox */
     scrollbar-color: #444A66 transparent;
+}
+
+.dropdown-bg {
+    background: rgba(207, 211, 222, 0.40);
+    backdrop-filter: blur(4px);
+}
+
+.gradient-border {
+    border: 1px solid transparent;
+    border-radius: 16px;
+    /*border-image: radial-gradient(circle, #ffffff, #919BA9 100%) 1;*/
 }

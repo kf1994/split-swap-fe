@@ -35,7 +35,7 @@ export const SendSwap: React.FC = () => {
         >
           <div
             className={"swapper-icon"}
-            style={{ left: isMbl ? "150px" : "245px" }}
+            style={{ left: isMbl ? "143px" : "245px" }}
           >
             <SwapArrowIcon />
           </div>

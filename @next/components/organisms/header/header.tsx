@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
   return (
     <header className="header-parent">
       {/* Logo */}
-      <SplitLogo />
+      <img src={"/images/split.svg"} alt={"Split"}/>
 
       {/* Right Section */}
 
@@ -86,7 +86,7 @@ export const Header: React.FC = () => {
                     </div>
 
                     {showDropdown && (
-                        <div className="absolute right-0 mt-2 w-[260px] rounded-xl bg-[#A7ADBD] border border-[#DFE2EB] text-white shadow-lg p-3 flex flex-col gap-3 z-50">
+                        <div className="absolute right-0 mt-2 w-[260px] dropdown-bg rounded-xl border border-[#DFE2EB] text-white p-3 flex flex-col gap-3 z-50">
                             <div className="flex gap-2 justify-between items-center cursor-pointer bg-[#A7ADBD] border border-[#DFE2EB] rounded-[8px] px-3 py-2">
                                 <p className="text-[16px] font-bold ">
                                     {slicedPubKey}
@@ -123,7 +123,7 @@ export const Header: React.FC = () => {
                     gap: 10,
                     alignItems: "center",
                     borderRadius: "16px",
-                    border: "1px solid #FFF",
+                    // border: "1px solid #FFF",
                     background:
                         "linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)",
                     padding: "8px 10px"
@@ -136,7 +136,7 @@ export const Header: React.FC = () => {
         </div>
         }
       {isMbl &&
-          <div onClick={()=>{setIsOpenDrawer(true)}} className={" cursor-pointer h-[30px] relative  p-2 border border-white icon-bg rounded-full"}>
+          <div onClick={()=>{setIsOpenDrawer(true)}} className={" cursor-pointer h-[30px] relative bottom-[7px] bg-[linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)]  p-2 border border-white icon-bg rounded-full"}>
             <BurgerMenuIcon style={{position:"relative", top:"1px"}}/>
           </div>
       }
@@ -144,12 +144,12 @@ export const Header: React.FC = () => {
           open={openDrawer}
           onClose={()=>{setIsOpenDrawer(false)}}
           title={
-              <SplitLogo height={29}/>
+              <img src={"/images/split.svg"} alt={"split"} width={144} height={30}/>
              }
       >
           <div className={"flex flex-col gap-3"}>
               {connected &&
-                  <div className={"bg-[#383D56] pt-3  pb-3 flex justify-between rounded-lg"}>
+                  <div className={"bg-[#383D56] p-3 flex justify-between rounded-lg"}>
                       <p className={"text-[16px] font-bold text-white"}>{ slicedPubKey}</p>
                       <div onClick={onCopy}>
                         <WalletIcon/>
@@ -159,7 +159,7 @@ export const Header: React.FC = () => {
               {!connected &&
                   <div className={"flex gap-2 pt-3  pb-3 items-center"} onClick={()=> {setVisible(true)}}>
                       <WalletIcon width={16} height={16}/>
-                      <p className={"text-white text-[14px] font-normal cursor-pointer"}>Connect Wallet</p>
+                      <p className={"text-white text-[14px] font-normal cursor-pointer"}>Connect wallet</p>
                   </div>
               }
               <div className={"flex gap-2 pt-3 pb-3 items-center cursor-pointer"}>
