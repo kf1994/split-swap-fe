@@ -61,9 +61,9 @@ export const Header: React.FC = () => {
         {!isMbl && <div style={{display: "flex", gap: "8px"}}>
             {/* Connect Wallet */}
             {!connected &&
-                <CustomButton className={"h-[48px]"} onClick={() => setVisible(true)}>
+                <CustomButton className={"flex h-[48px]"} onClick={() => setVisible(true)}>
                     <WalletIcon width={16} height={16} />
-                    Connect Wallet
+                    <p className={"text-[16px] font-bold flex"}>Connect wallet </p>
                 </CustomButton>
             }
 
