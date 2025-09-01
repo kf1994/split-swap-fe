@@ -54,15 +54,16 @@ export const Header: React.FC = () => {
   return (
     <header className="header-parent">
       {/* Logo */}
-      <img src={"/images/split.svg"} alt={"Split"}/>
+
+      <img src={"/images/main-split.png"} alt={"Split"} style={{filter: "drop-shadow(0 0 36.8px #FFF) blur(1px)"}}/>
 
       {/* Right Section */}
 
         {!isMbl && <div style={{display: "flex", gap: "8px"}}>
             {/* Connect Wallet */}
             {!connected &&
-                <CustomButton className={"flex h-[48px]"} onClick={() => setVisible(true)}>
-                    <WalletIcon width={16} height={16} />
+                <CustomButton variant={"connect"} disabled={false} className={"flex items-center  h-[48px]"} onClick={() => setVisible(true)}>
+                    {/*<WalletIcon width={16} height={16} />*/}
                     <p className={"text-[16px] font-bold flex"}>Connect wallet </p>
                 </CustomButton>
             }
@@ -136,7 +137,7 @@ export const Header: React.FC = () => {
         </div>
         }
       {isMbl &&
-          <div onClick={()=>{setIsOpenDrawer(true)}} className={" cursor-pointer h-[30px] relative bottom-[7px] bg-[linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)]  p-2 border border-white icon-bg rounded-full"}>
+          <div onClick={()=>{setIsOpenDrawer(true)}} className={" cursor-pointer h-[30px] relative  bg-[linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)]  p-2 border border-white icon-bg rounded-full"}>
             <BurgerMenuIcon style={{position:"relative", top:"1px"}}/>
           </div>
       }

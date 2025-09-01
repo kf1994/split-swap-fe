@@ -17,7 +17,7 @@ export const SendSwap: React.FC = () => {
   }
 
   return (
-    <>
+    <div className={"flex flex-col gap-1.5"}>
       {/* Top section (same as Swap tab) */}
       <SwapTokenBox
         label="From"
@@ -28,19 +28,17 @@ export const SendSwap: React.FC = () => {
       />
 
       {/* Swap Button */}
-      <div className="flex justify-center ">
         <button
           onClick={handleSwap}
-          className="flex items-center justify-center rounded-full swapper-icon-bg transition"
+          className="relative flex items-center justify-center rounded-full swapper-icon-bg transition"
         >
           <div
-            className={"swapper-icon"}
-            style={{ left: isMbl ? "143px" : "245px" }}
+            className={"absolute swapper-icon"}
+            // style={{ left: isMbl ? "143px" : "245px" }}
           >
             <SwapArrowIcon />
           </div>
         </button>
-      </div>
 
       <SwapTokenBox
         label="To"
@@ -51,6 +49,6 @@ export const SendSwap: React.FC = () => {
 
       {/* Receiving wallets & distribution */}
       <SendBottomSection />
-    </>
+    </div>
   )
 }
