@@ -54,7 +54,7 @@ export const SwapContainer: React.FC = () => {
 
             {/* Only show when tab is swap */}
             {activeTab === "swap" && (
-                <>
+                <div className={"flex flex-col gap-1.5"}>
                   <SwapTokenBox
                       label="From"
                       value={fromValue}
@@ -65,19 +65,17 @@ export const SwapContainer: React.FC = () => {
                   />
 
                   {/* Swap Button */}
-                  <div className="flex justify-center">
                     <button
                         onClick={handleSwap}
-                        className="flex items-center justify-center rounded-full swapper-icon-bg transition"
+                        className="relative flex items-center justify-center rounded-full swapper-icon-bg transition"
                     >
                       <div
-                          className="swapper-icon"
-                          style={{left: isMbl ? "150px" : "245px"}}
+                          className="absolute swapper-icon"
+                          // style={{left: isMbl ? "150px" : "245px"}}
                       >
                         <SwapArrowIcon/>
                       </div>
                     </button>
-                  </div>
 
                   <SwapTokenBox
                       label="To"
@@ -87,21 +85,20 @@ export const SwapContainer: React.FC = () => {
                   />
 
                   {/* Swap CTA */}
-                  <CustomButton
+                  <CustomButton disabled={true} variant={"swap"}
                       className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl">
-                    Swap
+                    <p className={"text-[16px] font-bold"}>Swap</p>
                   </CustomButton>
-                </>
+                </div>
             )}
 
             {/* Send Tab */}
             {activeTab === "send" && (
                 <>
                   <SendSwap/>
-                  <button
-                      className="w-full mt-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90">
-                    Send
-                  </button>
+                  <CustomButton disabled={true} variant={"swap"} className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl">
+                    <p className={"text-[16px] font-bold"}>Swap</p>
+                  </CustomButton>
                 </>
             )}
           </div>

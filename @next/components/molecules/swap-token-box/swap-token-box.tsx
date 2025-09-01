@@ -37,10 +37,10 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
           )}
           {label === "From" && (
             <>
-              <button className="px-2 py-1 flex justify-center rounded-lg border border-[#46456C]">
+              <button className="px-2 py-1 flex justify-center rounded-lg border border-[#46456C]  hover:bg-[#46456C] hover:border-[#503EDC]">
                 Half
               </button>
-              <button className="px-2 py-1 flex justify-center rounded-lg border border-[#46456C]">
+              <button className="px-2 py-1 flex justify-center  rounded-lg border border-[#46456C] hover:bg-[#46456C] hover:border-[#503EDC]">
                 Full
               </button>
             </>
@@ -69,7 +69,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
 
         <button
             onClick={() => setCurrentState?.("2")}
-            className={` flex items-center w-[250px] justify-between bg-[#444A66] px-3 py-2 rounded-xl text-white ${
+            className={` flex items-center border border-transparent w-[250px] justify-between bg-[#444A66] hover:border-[#503EDC] px-3 py-2 rounded-xl text-white ${
                 selectedToken ? "font-bold" : "font-normal"
             }`}
         >

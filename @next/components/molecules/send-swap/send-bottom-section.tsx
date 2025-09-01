@@ -91,7 +91,7 @@ export const SendBottomSection: React.FC = () => {
     reader.readAsText(file)
   }
   return (
-    <div className="bg-[#383D56] flex flex-col gap-2 rounded-xl p-4 w-full">
+    <div className="bg-[#383D56] mt-[6px] flex flex-col gap-2 rounded-xl p-4 w-full">
       {/* Receiving address header */}
       <div className="flex justify-between items-center">
         <span className="text-sm font-normal text-white">
