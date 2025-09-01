@@ -9,6 +9,7 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adap
 import {ThemeProvider} from "next-themes";
 import {SOLANA_RPC} from "@config";
 import {OkxWalletAdapter} from "../../wallet-adapters/OkxCustomAdapter";
+import { TooltipProvider } from "@api/components/ui/tooltip";
 
 
 export const RootProviders: React.FC<PropsWithChildren> = ({ children }) => {
@@ -27,7 +28,9 @@ export const RootProviders: React.FC<PropsWithChildren> = ({ children }) => {
                     enableSystem
                     disableTransitionOnChange
                     >
-                        {children}
+                        <TooltipProvider>
+                            {children}
+                        </TooltipProvider>
                     </ThemeProvider>
                 </WalletModalProvider>
             </WalletProvider>

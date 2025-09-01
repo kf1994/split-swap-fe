@@ -7,8 +7,10 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import Image from "next/image"
 import useMediaQuery from "use-media-antd-query";
-import {CustomButton, Drawer} from "@atoms";
+import {CustomButton, CustomTooltip, Drawer} from "@atoms";
 import { useRouter } from "next/navigation"
+import { Tooltip } from "@api/components/ui/tooltip"
+
 
 
 export const Header: React.FC = () => {
@@ -57,7 +59,7 @@ export const Header: React.FC = () => {
     <header className="header-parent">
       {/* Logo */}
 
-      <img src={"/images/main-split.png"} alt={"Split"} style={{filter: "drop-shadow(0 0 36.8px #FFF) blur(1px)"}}/>
+      <img src={"/images/main-split.png"} alt={"Split"} className={"cursor-pointer"}  onClick={()=> {router.push("/")}} />
 
       {/* Right Section */}
         {!isMbl &&
@@ -83,7 +85,11 @@ export const Header: React.FC = () => {
                                     "linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)",
                             }}
                         >
-                            <WalletIcon />
+                            <CustomTooltip
+                                trigger={<span onClick={onCopy}><WalletIcon /></span>}
+                                content={<span>{copyLabel}</span>}
+                            />
+
                             <p className="text-[16px] font-bold">
                                 {slicedPubKey}
                             </p>
@@ -95,13 +101,19 @@ export const Header: React.FC = () => {
                                     <p className="text-[16px] font-bold ">
                                         {slicedPubKey}
                                     </p>
-                                    <div
-                                        className={" shrink-0 cursor-pointer"}
-                                        onClick={onCopy}
-                                        data-tip={copyLabel}
-                                    >
-                                        <WalletIcon />
-                                    </div>
+
+                                    <CustomTooltip
+                                        trigger={
+                                        <div
+                                            className={" shrink-0 cursor-pointer"}
+                                            onClick={onCopy}
+                                            data-tip={copyLabel}
+                                        >
+                                            <WalletIcon/>
+                                        </div>
+                                    }
+                                        content={<span>{copyLabel}</span>}
+                                    />
                                 </div>
                                 <div
                                     className="flex gap-2 items-center cursor-pointer"
@@ -148,28 +160,33 @@ export const Header: React.FC = () => {
           open={openDrawer}
           onClose={()=>{setIsOpenDrawer(false)}}
           title={
-              <img src={"/images/split.svg"} alt={"split"} width={144} height={30}/>
+              <img src={"/images/split.svg"} className={"cursor-pointer"} onClick={()=> {router.push("/")}} alt={"split"} width={144} height={30}/>
              }
       >
           <div className={"flex flex-col gap-3"}>
               {connected &&
                   <div className={"bg-[#383D56] p-3 flex justify-between rounded-lg"}>
-                      <p className={"text-[16px] font-bold text-white"}>{ slicedPubKey}</p>
-                      <div onClick={onCopy}>
-                        <WalletIcon/>
-                      </div>
+                      <p className={"text-[16px] font-bold text-white"}>{slicedPubKey}</p>
+                      <CustomTooltip
+                          trigger={<span onClick={onCopy}><WalletIcon /></span>}
+                          content={<span>{copyLabel}</span>}
+                      />
                   </div>
               }
               {!connected &&
-                  <div className={"flex gap-2 pt-3  pb-3 items-center"} onClick={()=> {setVisible(true)}}>
+                  <div className={"flex gap-2 pt-3  pb-3 items-center"} onClick={() => {
+                      setVisible(true)
+                  }}>
                       <WalletIcon width={16} height={16}/>
                       <p className={"text-white text-[14px] font-normal cursor-pointer"}>Connect wallet</p>
                   </div>
               }
-              <div className={"flex gap-2 pt-3 pb-3 items-center cursor-pointer"}>
-                  <HistoryIcon/>
-                  <p className={"text-white text-[14px] cursor-pointer font-normal"}>History</p>
-              </div>
+              {connected &&
+                  <div className={"flex gap-2 pt-3 pb-3 items-center cursor-pointer"} onClick={()=> {router.push("/history")}}>
+                      <HistoryIcon/>
+                      <p className={"text-white text-[14px] cursor-pointer font-normal"}>History</p>
+                  </div>
+              }
               <div className={"flex gap-2 items-center cursor-pointer"} onClick={()=> {
                   disconnect()
               }}>

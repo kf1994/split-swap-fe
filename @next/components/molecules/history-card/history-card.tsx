@@ -1,8 +1,8 @@
 "use client"
 import * as React from "react";
-import {TokenInfo} from "@atoms";
-import { ExternalLink } from "lucide-react"
-import { SwapArrowsIcon} from "@svgs";
+import { TokenInfo } from "@atoms";
+import { ExternalLink } from "lucide-react";
+import { SwapArrowsIcon } from "@svgs";
 
 export type SwapToken = {
     amount: number | string;
@@ -11,8 +11,8 @@ export type SwapToken = {
 };
 
 export interface CustomSwapCardProps {
-    from: SwapToken;
-    to: SwapToken;
+    from: SwapToken;   // now array
+    to: SwapToken;     // now array
     timestamp?: Date | string | number;
     priceValue?: string | number;
     explorerHref?: string;
@@ -40,7 +40,7 @@ export const HistoryCard: React.FC<CustomSwapCardProps> = ({
 
     return (
         <div
-            className={`w-full max-w-[375px] rounded-2xl bg-[#383D56] p-4 text-white  ${className}`}
+            className={`w-full max-w-[375px] rounded-2xl bg-[#383D56] p-4 text-white ${className}`}
         >
             {/* Swap section */}
             <div className="flex items-center gap-2 justify-start">
@@ -49,10 +49,12 @@ export const HistoryCard: React.FC<CustomSwapCardProps> = ({
                 <TokenInfo token={to} />
             </div>
 
-            <div className="mt-3 flex flex-col gap-3 space-y-2 text-sm">
+            <div className="mt-3 flex flex-col gap-3 text-sm">
                 <div className="flex justify-between">
                     <span className="text-[14px] text-white font-normal">Date</span>
-                    <span className="text-[14px] text-white font-normal">{formatDate(timestamp)}</span>
+                    <span className="text-[14px] text-white font-normal">
+            {formatDate(timestamp)}
+          </span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-[14px] text-white font-normal">Price</span>
@@ -64,11 +66,13 @@ export const HistoryCard: React.FC<CustomSwapCardProps> = ({
                 <a
                     href={explorerHref}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#B8A6FF] hover:underline"
                 >
-                    <ExternalLink className={"text-[#A7A2FF]"}/> <p className={"text-[#A7A2FF] text-[14px] font-normal"}>View on Solscan</p>
+                    <ExternalLink className="text-[#A7A2FF]" />
+                    <p className="text-[#A7A2FF] text-[14px] font-normal">View on Solscan</p>
                 </a>
             )}
         </div>
     );
-};
+}
