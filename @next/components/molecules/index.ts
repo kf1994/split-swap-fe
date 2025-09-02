@@ -1,2 +1,2 @@
 export * from "./swap-token-box"
-export * from "./token-dropdown"
+export * from "./tokens-list"

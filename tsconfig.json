@@ -57,15 +57,16 @@
       "@config": [
         "./@next/config"
       ],
+      "@idls": [
+        "./@next/idls"
+      ],
       "@ApiReq": [
         "./@next/ApiReq"
       ],
       "@hooks": [
         "./@next/hooks"
       ],
-      "@config": [
-        "./@next/config"
-      ],
+
       "@store": [
         "./@next/store"
       ],

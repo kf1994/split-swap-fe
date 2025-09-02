@@ -1,11 +1,11 @@
 "use client"
 import type React from "react"
 import { useState } from "react"
-import {SwapTokenBox, TokenDropdown} from "@molecules"
+import {SwapTokenBox, TokensList} from "@molecules"
 import { SwapArrowIcon } from "@svgs"
 import { SendSwap } from "../../../molecules/send-swap/send-swap"
 import useMediaQuery from "use-media-antd-query"
-import {userProfileStore} from "../../../../store/use-profile-store";
+import {userProfileStore} from "@store";
 import {useShallow} from "zustand/react/shallow";
 import {CustomButton} from "@atoms";
 
@@ -60,9 +60,7 @@ export const SwapContainer: React.FC = () => {
                       label="From"
                       value={fromValue}
                       onChange={setFromValue}
-                      balance={70.42}
-                      token="SOL"
-
+                      section={"swap"}
                   />
 
                   {/* Swap Button */}
@@ -82,7 +80,7 @@ export const SwapContainer: React.FC = () => {
                       label="To"
                       value={toValue}
                       onChange={setToValue}
-                      token="SOL"
+                      section={"swap"}
                   />
 
                   {/* Swap CTA */}
@@ -105,7 +103,7 @@ export const SwapContainer: React.FC = () => {
           </div>
         }
         {currentState === "2" &&
-            <TokenDropdown />
+            <TokensList />
         }
       </>
   )
