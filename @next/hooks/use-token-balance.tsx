@@ -1,129 +1,66 @@
-// "use client"
-//
-// import { useLavarage } from "@providers"
-// import { formatLamportsToSol } from "@utils"
-// import { PublicKey } from "@solana/web3.js"
-// import { useCallback, useEffect, useState } from "react"
-// import {  type TokenInfo } from "@types"
-// import { SOL_ADDRESS } from "@config"
-// import { userProfileStore } from "@store"
-// import { useShallow } from "zustand/react/shallow"
-//
-// type Balance = {
-//     availableSol: number | null
-//     connected: boolean
-//     publicKey: PublicKey | null
-//     refetch: () => void
-// }
-//
-// const activeSubscriptions: Record<string, number> = {}
-// const balanceCache: Record<string, number | null> = {}
-// export function useTokenBalance(token: TokenInfo): Balance {
-//     const lavarages = useLavarage()
-//     const lavarage = lavarages[0]
-//     const [availableBalance, setAvailableBalance] = useState<number | null>(null)
-//
-//     const [isAuthenticated, selectedWallet] = userProfileStore(
-//         useShallow((s) => [s.isAuthenticated, s.selectedToken, ])
-//     )
-//
-//     const publicKey = mainWallet?.address as string
-//     const walletAddress =
-//         walletType === WalletType.MAX_SPEED && selectedWallet
-//             ? new PublicKey(selectedWallet?.address)
-//             : publicKey
-//                 ? new PublicKey(publicKey)
-//                 : null
-//     const updateBalance = (value: number | null) => {
-//         balanceCache[token.address] = value
-//         setAvailableBalance(value)
-//     }
-//
-//     const fetchBalance = useCallback(() => {
-//         if (!lavarages || !walletAddress || !isAuthenticated) {
-//             setAvailableBalance(null)
-//             return
-//         }
-//
-//         const { connection } = lavarage.program.provider
-//
-//         const setTokenBalance = () => {
-//             connection
-//                 .getTokenAccountsByOwner(walletAddress, { mint: new PublicKey(token?.address) }, "confirmed")
-//                 .then((res) => {
-//                     if (res.value.length === 0) {
-//                         updateBalance(null)
-//                         return
-//                     }
-//                     connection
-//                         .getTokenAccountBalance(res.value[0].pubkey, "confirmed")
-//                         .then((res) => {
-//                             updateBalance(res.value.uiAmount)
-//                         })
-//                         .catch((error) => {
-//                             console.error("Error fetching token balance:", error)
-//                             updateBalance(null)
-//                         })
-//                 })
-//                 .catch((error) => {
-//                     console.error("Error fetching token accounts:", error)
-//                     updateBalance(null)
-//                 })
-//         }
-//
-//         if (token?.address === SOL_ADDRESS) {
-//             connection
-//                 .getBalance(walletAddress, "confirmed")
-//                 .then((res) => updateBalance(formatLamportsToSol(res).toNumber()))
-//                 .catch((error) => {
-//                     console.error("Error fetching SOL balance:", error)
-//                     updateBalance(null)
-//                 })
-//         } else {
-//             setTokenBalance()
-//         }
-//     }, [walletAddress?.toString(), isAuthenticated, token?.address])
-//
-//     useEffect(() => {
-//         const cached = balanceCache[token.address]
-//         if (cached !== undefined) {
-//             setAvailableBalance(cached)
-//         }
-//         fetchBalance()
-//
-//         const { connection } = lavarage.program.provider
-//         const pubKeyString = walletAddress?.toString()
-//         if (!walletAddress || !pubKeyString) return
-//
-//         if (activeSubscriptions[pubKeyString]) return
-//
-//         const subscriptionId = connection.onAccountChange(
-//             walletAddress,
-//             (info) => {
-//                 if (token?.address === SOL_ADDRESS) {
-//                     if (!info.lamports) return
-//                     setAvailableBalance(formatLamportsToSol(info.lamports).toNumber())
-//                 } else {
-//                     fetchBalance()
-//                 }
-//             },
-//             "confirmed"
-//         )
-//
-//         activeSubscriptions[pubKeyString] = subscriptionId
-//
-//         return () => {
-//             if (activeSubscriptions[pubKeyString]) {
-//                 connection.removeAccountChangeListener(activeSubscriptions[pubKeyString])
-//                 delete activeSubscriptions[pubKeyString]
-//             }
-//         }
-//     }, [isAuthenticated, token?.address, walletAddress?.toString()])
-//
-//     return {
-//         availableSol: availableBalance,
-//         connected: isAuthenticated,
-//         publicKey: publicKey ? new PublicKey(publicKey) : null,
-//         refetch: fetchBalance
-//     }
-// }
+"use client"
+
+import { useEffect, useState, useCallback } from "react"
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js"
+import {SOL_ADDRESS, SOLANA_RPC} from "@config"
+
+
+type BalanceResult = {
+    balance?: number
+    loading: boolean
+    error: string | null
+    refetch: () => void
+}
+
+export function useTokenBalance(walletAddress: string | undefined, tokenAddress: string): BalanceResult {
+    const [balance, setBalance] = useState<number | undefined>(undefined)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const connection = new Connection(SOLANA_RPC)
+
+    const fetchBalance = useCallback(async () => {
+        if (!walletAddress) {
+            setBalance(null)
+            return
+        }
+
+        try {
+            setLoading(true)
+            setError(null)
+
+            const publicKey = new PublicKey(walletAddress)
+
+            // --- If token is SOL ---
+            if (tokenAddress === SOL_ADDRESS) {
+                const lamports = await connection.getBalance(publicKey, "confirmed")
+                setBalance(lamports / LAMPORTS_PER_SOL)
+            } else {
+                // --- If token is SPL ---
+                const mintKey = new PublicKey(tokenAddress)
+                const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+                    mint: mintKey,
+                })
+
+                if (tokenAccounts.value.length > 0) {
+                    const accountInfo = tokenAccounts.value[0].account.data.parsed.info
+                    const amount = accountInfo.tokenAmount.uiAmount || 0
+                    setBalance(amount)
+                } else {
+                    setBalance(0)
+                }
+            }
+        } catch (err: any) {
+            setError(err.message)
+            setBalance(undefined)
+        } finally {
+            setLoading(false)
+        }
+    }, [walletAddress, tokenAddress])
+
+    useEffect(() => {
+        fetchBalance()
+    }, [fetchBalance])
+
+    return { balance, loading, error, refetch: fetchBalance }
+}

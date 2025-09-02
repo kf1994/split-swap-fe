@@ -23,8 +23,7 @@ export const SendSwap: React.FC = () => {
         label="From"
         value={fromValue}
         onChange={setFromValue}
-        balance={70.42}
-        token="SOL"
+        section={"send"}
       />
 
       {/* Swap Button */}
@@ -44,7 +43,7 @@ export const SendSwap: React.FC = () => {
         label="To"
         value={toValue}
         onChange={setToValue}
-        token="SOL"
+        section={"send"}
       />
 
       {/* Receiving wallets & distribution */}

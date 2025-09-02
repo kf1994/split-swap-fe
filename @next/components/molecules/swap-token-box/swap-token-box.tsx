@@ -3,6 +3,8 @@ import { NumericTokenInput } from "@atoms"
 import Image from "next/image"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
+import {useTokenBalance} from "@hooks";
+import {SOL_ADDRESS} from "@config";
 
 interface SwapInputBoxProps {
     label: string
@@ -18,30 +20,23 @@ const getSymbol = (t: any) => t?.symbol || "?"
 
 export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({ label, value, section, onChange }) => {
 
-    const balance = 4230
     const [
         swap,
         send,
-        setSwapFrom,
-        setSwapTo,
-        setSendFrom,
-        setSendTo,
-        activeSelector,
         setCurrentState,
         setActiveSelector,
+        walletAddress
     ] = userProfileStore(
         useShallow((s) => [
             s.swap,
             s.send,
-            s.setSwapFrom,
-            s.setSwapTo,
-            s.setSendFrom,
-            s.setSendTo,
-            s.activeSelector,
             s.setCurrentState,
             s.setActiveSelector,
+            s.walletAddress
         ])
     )
+    const tokenBalance = useTokenBalance(walletAddress, section === "swap" ? swap.from.address: send.from.address)
+    // const usdc = useTokenBalance(walletAddress, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
     const handleActiveSelector = () => {
         setActiveSelector({
             section,
@@ -69,9 +64,9 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({ label, value, sectio
             <div className="flex justify-between items-center text-sm text-gray-400">
                 <span className="text-[14px] text-white font-normal">{label}</span>
                 <div className="flex gap-3 items-center">
-                    {balance !== undefined && (
-                        <span className="text-[14px] font-normal text-[#A6A0BB]">Balance: {balance}</span>
-                    )}
+                    {label === "From" &&
+                        <span className="text-[14px] font-normal text-[#A6A0BB]">Balance: {tokenBalance.balance ?? "--"}</span>
+                    }
                     {isFrom && (
                         <>
                             <button className="px-2 py-1 flex justify-center rounded-lg border border-[#46456C] hover:bg-[#46456C] hover:border-[#503EDC]">Half</button>
@@ -90,6 +85,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({ label, value, sectio
                     MIN_VALUE={0}
                     className="bg-transparent border-none outline-none text-[28px] font-bold w-full"
                     connected
+                    disabled={label === "To"}
                  />
 
                 <button
@@ -107,8 +103,9 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({ label, value, sectio
                     <Image src="/images/arrow-down.svg" alt="arrow" width={16} height={16} />
                 </button>
             </div>
-
-            <span className="text-xs text-gray-400">$12.2272</span>
+            {label === "From" &&
+                <span className="text-xs text-gray-400">$12.2272</span>
+            }
         </div>
     )
 }

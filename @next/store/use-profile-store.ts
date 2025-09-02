@@ -7,6 +7,8 @@ interface IUserProps {
     loading: boolean
     isAuthenticated: boolean
     setAuthentication: (isAuthenticated: boolean) => void
+    walletAddress:string | undefined
+    setWalletAddress: (address: string | undefined) => void
     reset: () => void
 
     selectedTokens: string[]
@@ -41,6 +43,7 @@ export const userProfileStore = create<IUserProps>()(
             (set) => ({
                 loading: false,
                 isAuthenticated: false,
+                walletAddress: undefined,
                 selectedTokens: [],
                 swap: {
                     from: SOL_TOKEN,
@@ -53,6 +56,7 @@ export const userProfileStore = create<IUserProps>()(
                 currentState: "1",
                 activeSelector: null,
 
+                setWalletAddress:(walletAddress: string | undefined) => set({walletAddress}),
                 setAuthentication: (isAuthenticated: boolean) => set({ isAuthenticated }),
                 setSelectedTokens: (selectedTokens: string[]) => set({ selectedTokens }),
 

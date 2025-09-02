@@ -10,7 +10,8 @@ import useMediaQuery from "use-media-antd-query";
 import {CustomButton, CustomTooltip, Drawer} from "@atoms";
 import { useRouter } from "next/navigation"
 import { Tooltip } from "@api/components/ui/tooltip"
-
+import {userProfileStore} from "@store";
+import {useShallow} from "zustand/react/shallow";
 
 
 export const Header: React.FC = () => {
@@ -21,7 +22,7 @@ export const Header: React.FC = () => {
   const colSize = useMediaQuery()
   const isMbl = ["xs", "sm"].includes(colSize)
     const [copyLabel, setCopyLabel] = useState<string>("Copy")
-
+    const [ setWalletAddress ] = userProfileStore(useShallow((s) => [ s.setWalletAddress ]))
 
     console.log("PubKey==>",  publicKey?.toBase58() , connected)
 
@@ -42,6 +43,11 @@ export const Header: React.FC = () => {
             document.removeEventListener("mousedown", handleClickOutside)
         }
     }, [])
+
+    useEffect(() => {
+        if (!connected) return
+        setWalletAddress(publicKey?.toBase58())
+    }, [publicKey]);
 
     const onCopy = () => {
         navigator.clipboard.writeText(publicKey ? publicKey?.toBase58():"")
