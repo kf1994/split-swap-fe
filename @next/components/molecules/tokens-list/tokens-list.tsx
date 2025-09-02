@@ -75,7 +75,7 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
     }, [search])
 
     const handleSelect = (symbol: string, rawToken?: any) => {
-        debugger
+
         const updated = [...(selectedTokens || []), symbol]
         setSelectedTokens?.(updated)
         // setSelectedToken?.(rawToken)
