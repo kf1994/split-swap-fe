@@ -6,8 +6,7 @@ import { NumericTokenInput } from "@atoms"
 import Image from "next/image"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { useTokenBalance } from "@hooks"
-import { formatUSD, useUsdPrice } from "../../../hooks/use-token-into-dollar"
+import { useTokenBalance, formatUSD, useUsdPrice } from "@hooks"
 import { Spinner } from "../../../../src/components/ui/shadcn-io/spinner"
 
 interface SwapInputBoxProps {
@@ -44,6 +43,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
     section === "swap" ? swap.from.address : send.from.address
   )
 
+  console.log("Wallet Address=>", walletAddress)
   const isFrom = label.toLowerCase() === "from"
 
   const handleActiveSelector = (): void => {
@@ -148,7 +148,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
                 width={24}
                 height={24}
               />
-              {symbol}
+              <p className={"w-[105px] flex truncate"}>{symbol}</p>
             </div>
           ) : (
             "Select"
