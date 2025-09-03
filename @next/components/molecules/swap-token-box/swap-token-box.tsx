@@ -158,6 +158,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
             alt="arrow"
             width={16}
             height={16}
+            className={"relative right-[5px]"}
           />
         </button>
       </div>
@@ -165,13 +166,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
       {/* HARDCODED PLACE: show USD worth here */}
       {label === "From" && (
         <span className="text-xs text-gray-400">
-          {priceLoading ? (
-            <Spinner variant={"circle"} />
-          ) : priceError ? (
-            "—"
-          ) : (
-            formatUSD(usdWorth)
-          )}
+          {priceError ? "—" : formatUSD(usdWorth)}
         </span>
       )}
 
