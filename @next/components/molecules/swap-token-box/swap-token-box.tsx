@@ -103,7 +103,8 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
         <div className="flex gap-3 items-center">
           {label === "From" && (
             <span className="text-[14px] font-normal text-[#A6A0BB]">
-              Balance: {tokenBalance.balance ?? "--"}
+              Balance:{" "}
+              {tokenBalance.balance ? tokenBalance.balance.toFixed(3) : "--"}
             </span>
           )}
           {isFrom && (
