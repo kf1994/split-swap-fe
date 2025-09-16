@@ -104,28 +104,39 @@ export class PSService {
   async createTradeBuffer(
     tradeBufferIndex: number
   ): Promise<null | { signature: string; tradeBuffer: PublicKey }> {
-    if (!this.magicUserPk) return null
+    // Optional: bounds check since index is 1 byte
+    if (tradeBufferIndex < 0 || tradeBufferIndex > 255) {
+      throw new Error("tradeBufferIndex must be in [0, 255] for 1-byte seed")
+    }
 
-    const tradeBufferKeypair = Keypair.generate()
+    const p: any = this.program.provider as any
+    const user: PublicKey | null = p.publicKey ?? p.wallet?.publicKey ?? null
 
-    const tx = await this.magicblockProgram.methods
+    if (!user) return null
+
+    // indexLE (1 byte)
+    const indexBuf = Buffer.from([tradeBufferIndex & 0xff])
+
+    // PDA: ["trade_buffer", indexLE]
+    const [tradeBuffer] = PublicKey.findProgramAddressSync(
+      [Buffer.from("trade_buffer"), indexBuf],
+      this.program.programId
+    )
+
+    const signature = await this.program.methods
       .createTradeBuffer(tradeBufferIndex)
       .accounts({
-        user: this.magicUserPk,
-        tradeBuffer: tradeBufferKeypair.publicKey,
+        user,
+        tradeBuffer,
         systemProgram: SystemProgram.programId,
-        ownerProgram: this.magicblockProgram.programId,
+        ownerProgram: this.program.programId,
         delegationProgram: new PublicKey(
           "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
         )
       })
-      .signers([tradeBufferKeypair])
       .rpc()
 
-    return {
-      signature: tx,
-      tradeBuffer: tradeBufferKeypair.publicKey
-    }
+    return { signature, tradeBuffer }
   }
 
   async placeTrade(

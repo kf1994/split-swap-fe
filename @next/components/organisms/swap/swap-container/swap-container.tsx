@@ -88,6 +88,7 @@ export const SwapContainer: React.FC = () => {
               <CustomButton
                 disabled={false}
                 onClick={() => {
+                  console.log("clicked")
                   void privateSwap.integratePrivateSwap()
                 }}
                 variant={"swap"}
