@@ -5,9 +5,17 @@ const withNextIntl = require("next-intl/plugin")(
 )
 
 const nextConfig = {
-  transpilePackages: ["antd", "antd-style"],
+  transpilePackages: [],
   reactStrictMode: true,
   swcMinify: true,
+  webpack: (config) => {
+    // Prevent optional pretty printer from being resolved by WalletConnect/pino chains
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "pino-pretty": false
+    }
+    return config
+  },
   images: {
     remotePatterns: [
       {
