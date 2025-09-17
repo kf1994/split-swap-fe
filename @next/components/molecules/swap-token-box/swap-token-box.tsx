@@ -43,7 +43,6 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
     section === "swap" ? swap.from.address : send.from.address
   )
 
-  console.log("Wallet Address=>", walletAddress)
   const isFrom = label.toLowerCase() === "from"
 
   const handleActiveSelector = (): void => {
@@ -85,15 +84,6 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
     if (usdPerToken == null) return null
     return numericValue * usdPerToken
   }, [numericValue, usdPerToken])
-
-  console.log(
-    "DisplayToken =>",
-    displayToken,
-    "symbol=",
-    symbol,
-    "usdPerToken=",
-    usdPerToken
-  )
 
   return (
     <div className="bg-[#383D56] rounded-xl p-4 flex flex-col gap-3 w-full">

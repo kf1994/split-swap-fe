@@ -31,8 +31,6 @@ export const Header: React.FC = () => {
     useShallow((s) => [s.setWalletAddress])
   )
 
-  console.log("PubKey==>", publicKey?.toBase58(), connected)
-
   const slicedPubKey =
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     publicKey?.toBase58().slice(0, 4) + "..." + publicKey?.toBase58().slice(-4)
