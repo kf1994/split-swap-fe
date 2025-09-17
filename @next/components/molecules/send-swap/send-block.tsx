@@ -3,15 +3,12 @@ import { useState } from "react"
 import { SwapTokenBox } from "@molecules"
 import { SwapArrowIcon } from "@svgs"
 import { SendBottomSection } from "./send-bottom-section"
-import useMediaQuery from "use-media-antd-query"
 
-export const SendSwap: React.FC = () => {
+export const SendBlock: React.FC = () => {
   const [fromValue, setFromValue] = useState("0.022")
   const [toValue, setToValue] = useState("0.022")
-  const colSize = useMediaQuery()
-  const isMbl = ["xs", "sm"].includes(colSize)
 
-  const handleSwap = () => {
+  const handleSwap = (): void => {
     setFromValue(toValue)
     setToValue(fromValue)
   }
@@ -27,17 +24,17 @@ export const SendSwap: React.FC = () => {
       />
 
       {/* Swap Button */}
-        <button
-          onClick={handleSwap}
-          className="relative flex items-center justify-center rounded-full swapper-icon-bg transition"
+      <button
+        onClick={handleSwap}
+        className="relative flex items-center justify-center rounded-full swapper-icon-bg transition"
+      >
+        <div
+          className={"absolute swapper-icon"}
+          // style={{ left: isMbl ? "143px" : "245px" }}
         >
-          <div
-            className={"absolute swapper-icon"}
-            // style={{ left: isMbl ? "143px" : "245px" }}
-          >
-            <SwapArrowIcon />
-          </div>
-        </button>
+          <SwapArrowIcon className={"swap-btn-animation"} />
+        </div>
+      </button>
 
       <SwapTokenBox
         label="To"

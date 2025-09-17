@@ -5,21 +5,17 @@ import { useState, useRef, useEffect } from "react"
 import { useTheme } from "next-themes"
 import {
   BurgerMenuIcon,
-  CrossIcon,
   HistoryIcon,
   LogoutIcon,
   MoonStarIcon,
-  SplitLogo,
   SunIcon,
   WalletIcon
 } from "@svgs"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletModal } from "@solana/wallet-adapter-react-ui"
-import Image from "next/image"
 import useMediaQuery from "use-media-antd-query"
 import { CustomButton, CustomTooltip, Drawer } from "@atoms"
 import { useRouter } from "next/navigation"
-import { Tooltip } from "@api/components/ui/tooltip"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
 
@@ -35,7 +31,10 @@ export const Header: React.FC = () => {
     useShallow((s) => [s.setWalletAddress])
   )
 
+  console.log("PubKey==>", publicKey?.toBase58(), connected)
+
   const slicedPubKey =
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     publicKey?.toBase58().slice(0, 4) + "..." + publicKey?.toBase58().slice(-4)
   const [openDrawer, setIsOpenDrawer] = useState(false)
 
@@ -43,6 +42,7 @@ export const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -62,7 +62,7 @@ export const Header: React.FC = () => {
     setWalletAddress(publicKey?.toBase58())
   }, [publicKey])
 
-  const onCopy = () => {
+  const onCopy = (): void => {
     navigator.clipboard.writeText(publicKey ? publicKey?.toBase58() : "")
     setCopyLabel("Copied!")
     setTimeout(() => {
@@ -164,7 +164,8 @@ export const Header: React.FC = () => {
                   <div
                     className="flex gap-2 items-center cursor-pointer"
                     onClick={() => {
-                      disconnect()
+                      void disconnect()
+                      setWalletAddress(undefined)
                       setShowDropdown(false)
                     }}
                   >
@@ -276,7 +277,8 @@ export const Header: React.FC = () => {
           <div
             className={"flex gap-2 items-center cursor-pointer"}
             onClick={() => {
-              disconnect()
+              void disconnect()
+              setWalletAddress(undefined)
             }}
           >
             <LogoutIcon />

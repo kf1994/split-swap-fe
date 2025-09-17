@@ -1,57 +1,62 @@
 "use client"
 import type React from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { SwapTokenBox, TokensList } from "@molecules"
 import { SwapArrowIcon } from "@svgs"
-import { SendSwap } from "../../../molecules/send-swap/send-swap"
-import useMediaQuery from "use-media-antd-query"
+import { SendBlock } from "../../../molecules/send-swap/send-block"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
 import { CustomButton } from "@atoms"
 import { usePrivateSwap } from "../../../../providers"
 
 export const SwapContainer: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"swap" | "send">("swap")
+  const router = useRouter()
+  const pathname = usePathname()
+  const activeTab: "swap" | "send" = pathname.includes("send") ? "send" : "swap"
+
   const [fromValue, setFromValue] = useState("0.022")
   const [toValue, setToValue] = useState("0.022")
 
   const privateSwap = usePrivateSwap()
+  const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
 
-  const colSize = useMediaQuery()
-  const isMbl = ["xs", "sm"].includes(colSize)
-
-  const handleSwap = () => {
+  const handleSwap = (): void => {
     setFromValue(toValue)
     setToValue(fromValue)
   }
-  const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const handleTabClick = (tab: "swap" | "send") => {
+    router.push(`/${tab}`, { shallow: true }) // updates URL but doesn’t reload
+  }
 
   return (
     <>
       {currentState === "1" && (
-        <div
-          className="
-            rounded-2xl p-6
-            w-[343px] md:w-[530px]
-            mx-auto
-            swap-container
-          "
-        >
-          {/* Custom Tabs */}
+        <div className="rounded-2xl p-6 w-[343px] md:w-[530px] mx-auto swap-container">
+          {/* Tabs */}
           <div className="flex gap-6">
-            {["swap", "send"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab as "swap" | "send")
-                }}
-                className={`pb-1.5 text-[20px] sm:text-[22px] font-bold transition ${
-                  activeTab === tab ? "text-white" : "text-[#A6A0BB]"
-                }`}
-              >
-                {tab === "swap" ? "Swap" : "Send"}
-              </button>
-            ))}
+            <button
+              onClick={() => {
+                handleTabClick("swap")
+              }}
+              className={`pb-1.5 text-[20px] sm:text-[22px] font-bold transition ${
+                activeTab === "swap" ? "text-white" : "text-[#A6A0BB]"
+              }`}
+            >
+              Swap
+            </button>
+            <button
+              onClick={() => {
+                handleTabClick("send")
+              }}
+              className={`pb-1.5 text-[20px] sm:text-[22px] font-bold transition ${
+                activeTab === "send" ? "text-white" : "text-[#A6A0BB]"
+              }`}
+            >
+              Send
+            </button>
           </div>
 
           {/* Only show when tab is swap */}
@@ -73,7 +78,7 @@ export const SwapContainer: React.FC = () => {
                   className="absolute swapper-icon"
                   // style={{left: isMbl ? "150px" : "245px"}}
                 >
-                  <SwapArrowIcon />
+                  <SwapArrowIcon className={"swap-btn-animation"} />
                 </div>
               </button>
 
@@ -83,8 +88,6 @@ export const SwapContainer: React.FC = () => {
                 onChange={setToValue}
                 section={"swap"}
               />
-
-              {/* Swap CTA */}
               <CustomButton
                 disabled={false}
                 onClick={() => {
@@ -102,7 +105,7 @@ export const SwapContainer: React.FC = () => {
           {/* Send Tab */}
           {activeTab === "send" && (
             <>
-              <SendSwap />
+              <SendBlock />
               <CustomButton
                 disabled={true}
                 variant={"swap"}

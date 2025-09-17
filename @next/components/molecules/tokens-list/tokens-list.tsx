@@ -7,13 +7,21 @@ import { ArrowLeftIcon, StarIcon } from "@svgs"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
 import { tokenService } from "@services"
-import { type TokenInfo, type TokenInfoInterface } from "@types"
+import { type TokenInfoInterface } from "@types"
+import {
+  Spinner,
+  type SpinnerProps
+} from "../../../../src/components/ui/shadcn-io/spinner"
+
+interface TokenDropdownProps {}
 
 type APIToken = Record<string, any>
 
-export const TokensList: React.FC = () => {
+const variant: Array<SpinnerProps["variant"]> = ["circle"]
+
+export const TokensList: React.FC<TokenDropdownProps> = () => {
   const [search, setSearch] = useState("")
-  const [results, setResults] = useState<TokenInfo[]>([])
+  const [results, setResults] = useState<TokenInfoInterface[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,8 +49,7 @@ export const TokensList: React.FC = () => {
     ])
   )
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const normalize = (t: APIToken) => {
+  const normalize = (t: APIToken): any => {
     return {
       key: t.address || t.symbol,
       symbol: t.symbol ?? "?",
@@ -70,7 +77,7 @@ export const TokensList: React.FC = () => {
     setActiveSelector(null) // clear context
   }
 
-  const fetchTokens = async (query: string): Promise<void> => {
+  const fetchTokens = async (query?: string) => {
     try {
       setLoading(true)
       setError(null)
@@ -85,7 +92,7 @@ export const TokensList: React.FC = () => {
   }
 
   useEffect(() => {
-    void fetchTokens("sol")
+    void fetchTokens()
   }, [])
 
   useEffect(() => {
@@ -161,8 +168,8 @@ export const TokensList: React.FC = () => {
       {/* Token List */}
       <div className="max-h-[340px] flex flex-col gap-2 overflow-y-auto thin-scrollbar">
         {loading && (
-          <div className="px-4 py-6 text-center text-[#A6A0BB] text-sm">
-            Searching…
+          <div className="px-4 py-6 flex justify-center text-center text-[#A6A0BB] text-sm">
+            <Spinner variant={"circle"} />
           </div>
         )}
 

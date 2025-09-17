@@ -1,9 +1,13 @@
+"use client"
+
+import { useMemo } from "react"
 import type React from "react"
 import { NumericTokenInput } from "@atoms"
 import Image from "next/image"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { useTokenBalance } from "@hooks"
+import { useTokenBalance, formatUSD, useUsdPrice } from "@hooks"
+import { Spinner } from "../../../../src/components/ui/shadcn-io/spinner"
 
 interface SwapInputBoxProps {
   label: string
@@ -15,7 +19,7 @@ interface SwapInputBoxProps {
 // Helpers to safely read icon/name across shapes
 const getIcon = (t: any): string => t?.icon || t?.logoURI || "/images/token.png"
 const getName = (t: any): string => t?.name || t?.symbol || "Token"
-const getSymbol = (t: any): string => t?.symbol || "?"
+const getSymbol = (t: any): string => (t?.symbol || "?").toUpperCase()
 
 export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
   label,
@@ -33,11 +37,15 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
         s.walletAddress
       ])
     )
+
   const tokenBalance = useTokenBalance(
     walletAddress,
     section === "swap" ? swap.from.address : send.from.address
   )
-  // const usdc = useTokenBalance(walletAddress, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+
+  console.log("Wallet Address=>", walletAddress)
+  const isFrom = label.toLowerCase() === "from"
+
   const handleActiveSelector = (): void => {
     setActiveSelector({
       section,
@@ -45,8 +53,6 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
     })
     setCurrentState("2")
   }
-
-  const isFrom = label.toLowerCase() === "from"
 
   // Pick token from store based on section + block
   const storeToken =
@@ -58,8 +64,36 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
       ? send.from
       : send.to
 
-  // Defaults come from the store
   const displayToken = storeToken
+  const symbol = getSymbol(displayToken) // read symbol from store
+  const address = displayToken?.address as string | undefined // from store
+  const chain = "solana"
+
+  const {
+    price: usdPerToken,
+    loading: priceLoading,
+    error: priceError
+  } = useUsdPrice(symbol, address, chain)
+
+  // Compute USD worth based on user input
+  const numericValue = useMemo(() => {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : 0
+  }, [value])
+
+  const usdWorth = useMemo(() => {
+    if (usdPerToken == null) return null
+    return numericValue * usdPerToken
+  }, [numericValue, usdPerToken])
+
+  console.log(
+    "DisplayToken =>",
+    displayToken,
+    "symbol=",
+    symbol,
+    "usdPerToken=",
+    usdPerToken
+  )
 
   return (
     <div className="bg-[#383D56] rounded-xl p-4 flex flex-col gap-3 w-full">
@@ -69,7 +103,8 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
         <div className="flex gap-3 items-center">
           {label === "From" && (
             <span className="text-[14px] font-normal text-[#A6A0BB]">
-              Balance: {tokenBalance.balance ?? "--"}
+              Balance:{" "}
+              {tokenBalance.balance ? tokenBalance.balance.toFixed(3) : "--"}
             </span>
           )}
           {isFrom && (
@@ -96,7 +131,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
           MIN_VALUE={0}
           className="bg-transparent border-none outline-none text-[28px] font-bold w-full"
           connected
-          disabled={label === "To"}
+          // disabled={label === "To"}
         />
 
         <button
@@ -113,7 +148,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
                 width={24}
                 height={24}
               />
-              {getSymbol(displayToken)}
+              <p className={"w-[105px] flex truncate"}>{symbol}</p>
             </div>
           ) : (
             "Select"
@@ -123,12 +158,23 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
             alt="arrow"
             width={16}
             height={16}
+            className={"relative right-[5px]"}
           />
         </button>
       </div>
+
+      {/* HARDCODED PLACE: show USD worth here */}
       {label === "From" && (
-        <span className="text-xs text-gray-400">$12.2272</span>
+        <span className="text-xs text-gray-400">
+          {priceError ? "—" : formatUSD(usdWorth)}
+        </span>
       )}
+
+      {/* If you also want to show for the To box, uncomment below:
+      {label === "To" && (
+        <span className="text-xs text-gray-400">{priceLoading ? "Fetching $ price…" : priceError ? "—" : formatUSD(usdWorth)}</span>
+      )}
+      */}
     </div>
   )
 }
