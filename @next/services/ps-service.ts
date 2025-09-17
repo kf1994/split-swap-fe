@@ -2,7 +2,12 @@
 
 import { type AnchorProvider, BN, Program } from "@coral-xyz/anchor"
 import { PrivateSwap } from "@idls"
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js"
+import { PublicKey, SystemProgram } from "@solana/web3.js"
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
+} from "@solana/spl-token"
 
 export class PSService {
   readonly program: Program<typeof PrivateSwap>
@@ -25,42 +30,12 @@ export class PSService {
     return (p.publicKey as PublicKey) ?? p.wallet?.publicKey ?? null
   }
 
-  // Adjust byte size to match your on-chain seed (1 = u8, 4 = u32 (default), 8 = u64).
-  private static encodeIndexLE(index: number, bytes: 1 | 4 | 8 = 4): Buffer {
-    if (bytes === 1) return Buffer.from([index & 0xff])
-    if (bytes === 4) {
-      const b = Buffer.alloc(4)
-      b.writeUInt32LE(index >>> 0, 0)
-      return b
-    }
-    // 8 bytes
-    const bn = new BN(index)
-    return bn.toArrayLike(Buffer, "le", 8)
-  }
-
   private deriveUserBalancePda(user: PublicKey): PublicKey {
     const [pda] = PublicKey.findProgramAddressSync(
       [Buffer.from("user_balance"), user.toBuffer()],
       this.program.programId
     )
-    return pda
-  }
 
-  // NOTE: Ensure the seeds match your Rust program exactly.
-  // Common: ["trade_buffer", user, indexLE]
-  private deriveTradeBufferPda(
-    user: PublicKey,
-    index: number,
-    indexBytes: 1 | 4 | 8 = 4
-  ): PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("trade_buffer"),
-        user.toBuffer(),
-        PSService.encodeIndexLE(index, indexBytes)
-      ],
-      this.program.programId
-    )
     return pda
   }
 
@@ -69,6 +44,8 @@ export class PSService {
       const user = this.userPk
       if (!user) return false
       const userBalanceAddress = this.deriveUserBalancePda(user)
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       await this.program.account.userBalance.fetch(userBalanceAddress)
       return true
     } catch {
@@ -99,6 +76,53 @@ export class PSService {
       .rpc()
 
     return { signature, userBalance }
+  }
+
+  async depositOnL1(
+    tokenMint: PublicKey,
+    amount: BN,
+    nonce: BN
+  ): Promise<string | null> {
+    const trader = this.magicUserPk
+    if (!trader) return null
+
+    const [globalState] = PublicKey.findProgramAddressSync(
+      [Buffer.from("global_state")],
+      this.program.programId
+    )
+
+    const [depositState] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("deposit_state"),
+        trader.toBuffer(),
+        nonce.toArrayLike(Buffer, "le", 8)
+      ],
+      this.program.programId
+    )
+
+    const userTokenAccount = getAssociatedTokenAddressSync(tokenMint, trader)
+    const vaultTokenAccount = getAssociatedTokenAddressSync(
+      tokenMint,
+      globalState,
+      true
+    )
+
+    const tx = await this.program.methods
+      .depositOnL1(nonce, amount)
+      .accounts({
+        trader,
+        globalState,
+        depositState,
+        userTokenAccount,
+        tokenMint,
+        vaultTokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram2022: TOKEN_2022_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+      })
+      .rpc()
+
+    return tx
   }
 
   async createTradeBuffer(
@@ -160,7 +184,7 @@ export class PSService {
       this.magicblockProgram.programId
     )
 
-    return await this.magicblockProgram.methods
+    const method = this.magicblockProgram.methods
       .placeTrade(
         tradeBufferIndex,
         inputMint,
@@ -174,7 +198,8 @@ export class PSService {
         globalState,
         tradeBuffer
       })
-      .rpc()
+
+    return await method.rpc()
   }
 
   async integratePrivateSwap(): Promise<string | null> {
@@ -183,17 +208,18 @@ export class PSService {
       await this.createUserBalanceState()
     }
 
+    // 4. Deposit tokens (if needed) (on mainnet)
+    const depositTx = await this.depositOnL1(
+      new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+      new BN(1000000), // 1 USDC (6 decimals)
+      new BN(Date.now()) // nonce
+    )
+    console.log(depositTx, "depositTx")
+
     const tradeBufferIndex = 0
-
-    // Fallback to creating a new buffer on L1
-    const result = await this.createTradeBuffer(tradeBufferIndex)
-    if (!result) return null
-
-    const tradeBufferAddress = result.tradeBuffer
-
     // Execute trade on Magicblock
     const tradeTx = await this.placeTrade(
-      tradeBufferAddress,
+      new PublicKey("HJThQX26rKJhsfoi95T5Uqvjcda79LSRNtkm4Mdm2KMe"),
       tradeBufferIndex,
       new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), // USDC
       new PublicKey("So11111111111111111111111111111111111111112"), // SOL (fixed trailing space)

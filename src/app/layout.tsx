@@ -1,15 +1,10 @@
 // app/layout.tsx
 import "../styles/globals.css"
-import 'react-modern-drawer/dist/index.css'
-import { Poppins, Krub } from "next/font/google"
+import "react-modern-drawer/dist/index.css"
 import type { Metadata } from "next"
 import { MainLayout } from "@layouts"
-import { ThemeProvider } from "next-themes"
 import type React from "react"
-import {RootProviders} from "../../@next/components/providers/root-providers/root-providers";
-
-
-const poppins = Poppins({ subsets: ["latin"], weight: "400" })
+import { RootProviders, WindowProvider } from "../../@next/components/providers"
 
 interface RootLayoutProps {
   children: React.ReactNode
@@ -21,6 +16,7 @@ const RootLayout = async ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
       <body>
+        <WindowProvider>
           <RootProviders>
             <main
               className="main-bg"
@@ -29,22 +25,22 @@ const RootLayout = async ({ children }: RootLayoutProps) => {
               <MainLayout>{children}</MainLayout>
             </main>
           </RootProviders>
+        </WindowProvider>
       </body>
     </html>
   )
 }
 
 export const metadata: Metadata = {
-  title: "",
-  description: "",
+  title: "Split Swap",
+  description: "Split Swap",
   icons: {
     icon: "/"
   },
   openGraph: {
-    title: "",
-    description: "",
+    title: "Split Swap",
+    description: "Split Swap",
     url: "",
-    siteName: "$",
     type: "website"
   }
 }

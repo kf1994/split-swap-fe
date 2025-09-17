@@ -3,3 +3,10 @@
 type Messages = typeof import("@/locale/messages/en-US.json")
 
 declare interface IntlMessages extends Messages {}
+
+interface Window {
+  phantom?: any
+  solflare?: any
+  okxwallet?: any
+  dataLayer?: any
+}

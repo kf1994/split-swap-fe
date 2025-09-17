@@ -1,7 +1,7 @@
 "use client"
 
 import "@solana/wallet-adapter-react-ui/styles.css"
-import type React from "react"
+import React from "react"
 import type { PropsWithChildren } from "react"
 import {
   ConnectionProvider,
@@ -28,6 +28,13 @@ export const RootProviders: React.FC<PropsWithChildren> = ({ children }) => {
     new SolflareWalletAdapter(),
     new OkxWalletAdapter()
   ]
+
+  const [isClient, setIsClient] = React.useState(false)
+  React.useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) return null
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -11,7 +11,6 @@ interface Wallet {
 
 export const SendBottomSection: React.FC = () => {
   const [wallets, setWallets] = useState<Wallet[]>([])
-  const [randomized, setRandomized] = useState(false)
   const [initialAddress, setInitialAddress] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -43,7 +42,7 @@ export const SendBottomSection: React.FC = () => {
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  ): Promise<void> => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -75,7 +74,7 @@ export const SendBottomSection: React.FC = () => {
         return {
           address: address.trim(),
           percentage: perc ? Number(perc.trim()) : 0
-        }
+        } as unknown as Wallet
       })
 
       setWallets(parsedWallets)
