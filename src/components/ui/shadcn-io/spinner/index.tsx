@@ -2,46 +2,46 @@ import {
   LoaderCircleIcon,
   LoaderIcon,
   LoaderPinwheelIcon,
-  type LucideProps,
-} from 'lucide-react';
-import { cn } from '@api/lib/utils';
+  type LucideProps
+} from "lucide-react"
+import { cn } from "@api/lib/utils"
 
-type SpinnerVariantProps = Omit<SpinnerProps, 'variant'>;
+type SpinnerVariantProps = Omit<SpinnerProps, "variant">
 
-const Default = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderIcon className={cn('animate-spin', className)} {...props} />
-);
+const Default: React.FC<SpinnerVariantProps> = ({ className, ...props }) => (
+  <LoaderIcon className={cn("animate-spin", className)} {...props} />
+)
 
-const Circle = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderCircleIcon className={cn('animate-spin', className)} {...props} />
-);
+const Circle: React.FC<SpinnerVariantProps> = ({ className, ...props }) => (
+  <LoaderCircleIcon className={cn("animate-spin", className)} {...props} />
+)
 
-const Pinwheel = ({ className, ...props }: SpinnerVariantProps) => (
-  <LoaderPinwheelIcon className={cn('animate-spin', className)} {...props} />
-);
+const Pinwheel: React.FC<SpinnerVariantProps> = ({ className, ...props }) => (
+  <LoaderPinwheelIcon className={cn("animate-spin", className)} {...props} />
+)
 
-const CircleFilled = ({
+const CircleFilled: React.FC<SpinnerVariantProps> = ({
   className,
   size = 24,
   ...props
-}: SpinnerVariantProps) => (
+}) => (
   <div className="relative" style={{ width: size, height: size }}>
     <div className="absolute inset-0 rotate-180">
       <LoaderCircleIcon
-        className={cn('animate-spin', className, 'text-foreground opacity-20')}
+        className={cn("animate-spin", className, "text-foreground opacity-20")}
         size={size}
         {...props}
       />
     </div>
     <LoaderCircleIcon
-      className={cn('relative animate-spin', className)}
+      className={cn("relative animate-spin", className)}
       size={size}
       {...props}
     />
   </div>
-);
+)
 
-const Ellipsis = ({ size = 24, ...props }: SpinnerVariantProps) => {
+const Ellipsis: React.FC<SpinnerVariantProps> = ({ size = 24, ...props }) => {
   return (
     <svg
       height={size}
@@ -84,10 +84,10 @@ const Ellipsis = ({ size = 24, ...props }: SpinnerVariantProps) => {
         />
       </circle>
     </svg>
-  );
-};
+  )
+}
 
-const Ring = ({ size = 24, ...props }: SpinnerVariantProps) => (
+const Ring: React.FC<SpinnerVariantProps> = ({ size = 24, ...props }) => (
   <svg
     height={size}
     stroke="currentColor"
@@ -144,9 +144,9 @@ const Ring = ({ size = 24, ...props }: SpinnerVariantProps) => (
       </circle>
     </g>
   </svg>
-);
+)
 
-const Bars = ({ size = 24, ...props }: SpinnerVariantProps) => (
+const Bars: React.FC<SpinnerVariantProps> = ({ size = 24, ...props }) => (
   <svg
     height={size}
     viewBox="0 0 24 24"
@@ -203,9 +203,9 @@ const Bars = ({ size = 24, ...props }: SpinnerVariantProps) => (
       y="1"
     />
   </svg>
-);
+)
 
-const Infinite = ({ size = 24, ...props }: SpinnerVariantProps) => (
+const Infinite: React.FC<SpinnerVariantProps> = ({ size = 24, ...props }) => (
   <svg
     height={size}
     preserveAspectRatio="xMidYMid"
@@ -223,8 +223,8 @@ const Infinite = ({ size = 24, ...props }: SpinnerVariantProps) => (
       strokeLinecap="round"
       strokeWidth="10"
       style={{
-        transform: 'scale(0.8)',
-        transformOrigin: '50px 50px',
+        transform: "scale(0.8)",
+        transformOrigin: "50px 50px"
       }}
     >
       <animate
@@ -236,37 +236,37 @@ const Infinite = ({ size = 24, ...props }: SpinnerVariantProps) => (
       />
     </path>
   </svg>
-);
+)
 
 export type SpinnerProps = LucideProps & {
   variant?:
-    | 'default'
-    | 'circle'
-    | 'pinwheel'
-    | 'circle-filled'
-    | 'ellipsis'
-    | 'ring'
-    | 'bars'
-    | 'infinite';
-};
+    | "default"
+    | "circle"
+    | "pinwheel"
+    | "circle-filled"
+    | "ellipsis"
+    | "ring"
+    | "bars"
+    | "infinite"
+}
 
-export const Spinner = ({ variant, ...props }: SpinnerProps) => {
+export const Spinner: React.FC<SpinnerProps> = ({ variant, ...props }) => {
   switch (variant) {
-    case 'circle':
-      return <Circle {...props} />;
-    case 'pinwheel':
-      return <Pinwheel {...props} />;
-    case 'circle-filled':
-      return <CircleFilled {...props} />;
-    case 'ellipsis':
-      return <Ellipsis {...props} />;
-    case 'ring':
-      return <Ring {...props} />;
-    case 'bars':
-      return <Bars {...props} />;
-    case 'infinite':
-      return <Infinite {...props} />;
+    case "circle":
+      return <Circle {...props} />
+    case "pinwheel":
+      return <Pinwheel {...props} />
+    case "circle-filled":
+      return <CircleFilled {...props} />
+    case "ellipsis":
+      return <Ellipsis {...props} />
+    case "ring":
+      return <Ring {...props} />
+    case "bars":
+      return <Bars {...props} />
+    case "infinite":
+      return <Infinite {...props} />
     default:
-      return <Default {...props} />;
+      return <Default {...props} />
   }
-};
+}

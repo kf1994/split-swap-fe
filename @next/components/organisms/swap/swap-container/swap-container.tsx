@@ -28,7 +28,7 @@ export const SwapContainer: React.FC = () => {
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleTabClick = (tab: "swap" | "send") => {
-    router.push(`/${tab}`, { shallow: true }) // updates URL but doesn’t reload
+    router.push(`/${tab}`) // updates URL but doesn’t reload
   }
 
   return (
