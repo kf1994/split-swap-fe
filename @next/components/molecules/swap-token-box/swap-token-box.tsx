@@ -6,8 +6,7 @@ import { NumericTokenInput } from "@atoms"
 import Image from "next/image"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { useTokenBalance, formatUSD, useUsdPrice } from "@hooks"
-import { type TokenInfoInterface } from "@types"
+import { formatUSD } from "@hooks"
 import BigNumber from "bignumber.js"
 interface SwapInputBoxProps {
   label: string
@@ -15,6 +14,7 @@ interface SwapInputBoxProps {
   section: "swap" | "send"
   onChange: (val: string) => void
   availableBalance?: number | null
+  usdPerToken?: number | null
 }
 
 // Helpers to safely read icon/name across shapes
@@ -27,7 +27,8 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
   value,
   section,
   onChange,
-  availableBalance
+  availableBalance,
+  usdPerToken
 }) => {
   const [swap, send, setCurrentState, setActiveSelector] = userProfileStore(
     useShallow((s) => [s.swap, s.send, s.setCurrentState, s.setActiveSelector])
@@ -55,14 +56,14 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
 
   const displayToken = storeToken
   const symbol = getSymbol(displayToken) // read symbol from store
-  const address = displayToken?.address as string | undefined // from store
-  const chain = "solana"
+  // const address = displayToken?.address as string | undefined // from store
+  // const chain = "solana"
 
-  const {
-    price: usdPerToken,
-    loading: priceLoading,
-    error: priceError
-  } = useUsdPrice(symbol, address, chain)
+  // const {
+  //   price: usdPerToken,
+  //   loading: priceLoading,
+  //   error: priceError
+  // } = useUsdPrice(symbol, address, chain)
 
   // Compute USD worth based on user input
   const numericValue = useMemo(() => {
@@ -165,7 +166,7 @@ export const SwapTokenBox: React.FC<SwapInputBoxProps> = ({
       {/* HARDCODED PLACE: show USD worth here */}
       {label === "From" && (
         <span className="text-xs text-gray-400">
-          {priceError ? "—" : formatUSD(usdWorth)}
+          {usdPerToken ? formatUSD(usdWorth) : "—"}
         </span>
       )}
 

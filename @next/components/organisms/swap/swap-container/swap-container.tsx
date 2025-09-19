@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { SwapTokenBox, TokensList } from "@molecules"
 import { SwapArrowIcon } from "@svgs"
 import { SendBlock } from "../../../molecules/send-swap/send-block"
@@ -9,7 +9,7 @@ import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
 import { ActionButton, CustomButton } from "@atoms"
 import { usePrivateSwap } from "../../../../providers"
-import { useTokenBalance } from "@hooks"
+import { useTokenBalance, useUsdPrice } from "@hooks"
 import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
 import { useWallet } from "@solana/wallet-adapter-react"
 
@@ -20,7 +20,17 @@ export const SwapContainer: React.FC = () => {
   const [swap, walletAddress, setSwapFrom, setSwapTo] = userProfileStore(
     useShallow((s) => [s.swap, s.walletAddress, s.setSwapFrom, s.setSwapTo])
   )
+  const { price: fromTokenPrice } = useUsdPrice(
+    swap.from?.symbol,
+    swap.from?.address,
+    "solana"
+  )
 
+  const { price: toTokenPrice } = useUsdPrice(
+    swap.to?.symbol,
+    swap.to?.address,
+    "solana"
+  )
   const { connected } = useWallet()
   const { balance } = useTokenBalance(walletAddress, swap.from.address)
   const [fromValue, setFromValue] = useState("0.022")
@@ -30,6 +40,8 @@ export const SwapContainer: React.FC = () => {
   const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
 
   const handleSwap = (): void => {
+    // setFromValue(toValue)
+    // setToValue(fromValue)
     setSwapFrom(swap?.to)
     setSwapTo(swap?.from)
   }
@@ -41,6 +53,14 @@ export const SwapContainer: React.FC = () => {
     maxAvailableFunds: balance ?? 0,
     loading: false
   })
+  useEffect(() => {
+    if (fromTokenPrice && toTokenPrice) {
+      const fromValueNum = Number(fromValue) || 0
+      const usdWorth = fromValueNum * fromTokenPrice
+      const toAmount = usdWorth / toTokenPrice
+      setToValue(toAmount.toFixed(6)) // 6 decimals
+    }
+  }, [fromValue, fromTokenPrice, toTokenPrice])
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleTabClick = (tab: "swap" | "send") => {
     router.push(`/${tab}`) // updates URL but doesn’t reload
@@ -83,6 +103,7 @@ export const SwapContainer: React.FC = () => {
                 onChange={setFromValue}
                 section={"swap"}
                 availableBalance={balance}
+                usdPerToken={fromTokenPrice}
               />
 
               {/* Swap Button */}

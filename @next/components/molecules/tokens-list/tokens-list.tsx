@@ -34,7 +34,9 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
     setSendFrom,
     setSendTo,
     activeSelector,
-    setActiveSelector
+    setActiveSelector,
+    send,
+    swap
   ] = userProfileStore(
     useShallow((s) => [
       s.selectedTokens,
@@ -45,10 +47,28 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
       s.setSendFrom,
       s.setSendTo,
       s.activeSelector,
-      s.setActiveSelector
+      s.setActiveSelector,
+      s.send,
+      s.swap
     ])
   )
-
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const isTokenDisabled = (token: TokenInfoInterface) => {
+    if (activeSelector?.section === "send") {
+      if (activeSelector.side === "from") {
+        return token.address === (send?.to?.address ?? "")
+      } else {
+        return token.address === (send?.from?.address ?? "")
+      }
+    } else if (activeSelector?.section === "swap") {
+      if (activeSelector.side === "from") {
+        return token.address === (swap?.to?.address ?? "")
+      } else {
+        return token.address === (swap?.from?.address ?? "")
+      }
+    }
+    return false
+  }
   const normalize = (t: APIToken): any => {
     return {
       key: t.address || t.symbol,
@@ -186,14 +206,20 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
               return (
                 <button
                   key={token.key}
-                  onClick={() => {
+                  disabled={isTokenDisabled(token.__raw)}
+                  onClick={() =>
+                    !isTokenDisabled(token.__raw) &&
                     handleSelect(token.symbol, token.__raw)
-                  }}
-                  className="flex items-center gap-3 w-full p-3 bg-[#444A66] rounded-[16px] text-left"
+                  }
+                  className={`flex items-center gap-3 w-full p-3 rounded-[16px] text-left ${
+                    isTokenDisabled(token.__raw)
+                      ? "bg-gray-600 cursor-not-allowed opacity-50"
+                      : "bg-[#444A66]"
+                  }`}
                 >
                   <Image
                     src={token.icon}
-                    alt={token.name}
+                    alt={token.symbol}
                     width={28}
                     height={28}
                   />
@@ -202,9 +228,9 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
                       <span className="text-white text-[16px] font-bold">
                         {token.symbol}
                       </span>
-                      <span className="bg-[#383D56] rounded-[4px] px-1 uppercase text-[#A6A0BB] text-[12px] font-normal flex items-center">
+                      {/* <span className="bg-[#383D56] rounded-[4px] px-1 uppercase text-[#A6A0BB] text-[12px] font-normal flex items-center">
                         {token.chain}
-                      </span>
+                      </span> */}
                     </div>
                     <span className="text-[14px] font-normal text-[#A6A0BB]">
                       {token.name}
