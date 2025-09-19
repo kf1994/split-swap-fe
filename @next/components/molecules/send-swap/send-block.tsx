@@ -3,14 +3,21 @@ import { useState } from "react"
 import { SwapTokenBox } from "@molecules"
 import { SwapArrowIcon } from "@svgs"
 import { SendBottomSection } from "./send-bottom-section"
+import { useTokenBalance } from "@hooks"
+import { userProfileStore } from "@store"
+import { useShallow } from "zustand/react/shallow"
 
 export const SendBlock: React.FC = () => {
   const [fromValue, setFromValue] = useState("0.022")
   const [toValue, setToValue] = useState("0.022")
+  const [send, walletAddress, setSendTo, setSendFrom] = userProfileStore(
+    useShallow((s) => [s.send, s.walletAddress, s.setSendTo, s.setSendFrom])
+  )
 
+  const { balance } = useTokenBalance(walletAddress, send.from.address)
   const handleSwap = (): void => {
-    setFromValue(toValue)
-    setToValue(fromValue)
+    setSendFrom(send?.to)
+    setSendTo(send?.from)
   }
 
   return (
@@ -21,6 +28,7 @@ export const SendBlock: React.FC = () => {
         value={fromValue}
         onChange={setFromValue}
         section={"send"}
+        availableBalance={balance}
       />
 
       {/* Swap Button */}

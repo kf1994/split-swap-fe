@@ -7,14 +7,22 @@ import { SwapArrowIcon } from "@svgs"
 import { SendBlock } from "../../../molecules/send-swap/send-block"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { CustomButton } from "@atoms"
+import { ActionButton, CustomButton } from "@atoms"
 import { usePrivateSwap } from "../../../../providers"
+import { useTokenBalance } from "@hooks"
+import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
+import { useWallet } from "@solana/wallet-adapter-react"
 
 export const SwapContainer: React.FC = () => {
   const router = useRouter()
   const pathname = usePathname()
   const activeTab: "swap" | "send" = pathname.includes("send") ? "send" : "swap"
+  const [swap, walletAddress, setSwapFrom, setSwapTo] = userProfileStore(
+    useShallow((s) => [s.swap, s.walletAddress, s.setSwapFrom, s.setSwapTo])
+  )
 
+  const { connected } = useWallet()
+  const { balance } = useTokenBalance(walletAddress, swap.from.address)
   const [fromValue, setFromValue] = useState("0.022")
   const [toValue, setToValue] = useState("0.022")
 
@@ -22,10 +30,17 @@ export const SwapContainer: React.FC = () => {
   const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
 
   const handleSwap = (): void => {
-    setFromValue(toValue)
-    setToValue(fromValue)
+    setSwapFrom(swap?.to)
+    setSwapTo(swap?.from)
   }
-
+  const actionMainButtonMode = getActionMainButtonMode({
+    isOnline: true,
+    connected,
+    confirming: false,
+    solInput: fromValue?.toString(),
+    maxAvailableFunds: balance ?? 0,
+    loading: false
+  })
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleTabClick = (tab: "swap" | "send") => {
     router.push(`/${tab}`) // updates URL but doesn’t reload
@@ -67,6 +82,7 @@ export const SwapContainer: React.FC = () => {
                 value={fromValue}
                 onChange={setFromValue}
                 section={"swap"}
+                availableBalance={balance}
               />
 
               {/* Swap Button */}
@@ -88,17 +104,15 @@ export const SwapContainer: React.FC = () => {
                 onChange={setToValue}
                 section={"swap"}
               />
-              <CustomButton
-                disabled={false}
-                onClick={() => {
+              <ActionButton
+                actionMainButtonMode={actionMainButtonMode}
+                loading={false}
+                className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
+                swap={() => {
                   console.log("clicked")
                   void privateSwap.integratePrivateSwap()
                 }}
-                variant={"swap"}
-                className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
-              >
-                <p className={"text-[16px] font-bold"}>Swap</p>
-              </CustomButton>
+              />
             </div>
           )}
 

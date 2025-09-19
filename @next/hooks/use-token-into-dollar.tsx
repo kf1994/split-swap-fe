@@ -144,6 +144,7 @@ export const formatUSD = (n: number | null | undefined) => {
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 6
+    maximumFractionDigits: 6,
+    currencyDisplay: "narrowSymbol"
   }).format(n)
 }
