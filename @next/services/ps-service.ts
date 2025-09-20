@@ -202,29 +202,37 @@ export class PSService {
     return await method.rpc()
   }
 
-  async integratePrivateSwap(): Promise<string | null> {
+  async integratePrivateSwap(
+    fromToken: string,
+    toToken: string,
+    amount: string,
+    decimals: number,
+    userAddress: string,
+    slippageBps: number = 100 // 1% default
+  ): Promise<string | null> {
     const userBalanceExists = await this.checkUserBalanceExists()
     if (!userBalanceExists) {
       await this.createUserBalanceState()
     }
 
-    // 4. Deposit tokens (if needed) (on mainnet)
+    const amountBN = new BN(Math.floor(Number(amount) * 10 ** decimals))
+
+    // Optional: Deposit if required
     const depositTx = await this.depositOnL1(
-      new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
-      new BN(1000000), // 1 USDC (6 decimals)
+      new PublicKey(fromToken),
+      amountBN,
       new BN(Date.now()) // nonce
     )
-    console.log(depositTx, "depositTx")
+    console.log("Deposit:", depositTx)
 
     const tradeBufferIndex = 0
-    // Execute trade on Magicblock
     const tradeTx = await this.placeTrade(
-      new PublicKey("HJThQX26rKJhsfoi95T5Uqvjcda79LSRNtkm4Mdm2KMe"),
+      new PublicKey(userAddress), // who’s trading
       tradeBufferIndex,
-      new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), // USDC
-      new PublicKey("So11111111111111111111111111111111111111112"), // SOL (fixed trailing space)
-      new BN(1_000_000), // 1 USDC (6 decimals)
-      100 // 1% slippage
+      new PublicKey(fromToken),
+      new PublicKey(toToken),
+      amountBN,
+      slippageBps
     )
 
     return tradeTx

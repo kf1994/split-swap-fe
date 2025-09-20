@@ -31,6 +31,8 @@ export const SwapContainer: React.FC = () => {
     swap.to?.address,
     "solana"
   )
+  console.log(toTokenPrice, "CHECK TWO TOKEN PRICE")
+
   const { connected } = useWallet()
   const { balance } = useTokenBalance(walletAddress, swap.from.address)
   const [fromValue, setFromValue] = useState("0.022")
@@ -130,8 +132,15 @@ export const SwapContainer: React.FC = () => {
                 loading={false}
                 className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
                 swap={() => {
-                  console.log("clicked")
-                  void privateSwap.integratePrivateSwap()
+                  if (swap.from && swap.to && walletAddress) {
+                    void privateSwap.integratePrivateSwap(
+                      swap.from.address,
+                      swap.to.address,
+                      fromValue, // user input
+                      swap.from.decimals ?? 6, // decimals
+                      walletAddress
+                    )
+                  }
                 }}
               />
             </div>
