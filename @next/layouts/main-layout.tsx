@@ -5,7 +5,8 @@ import type React from "react"
 import { useTheme } from "next-themes"
 import { Header } from "@organisms"
 import { useEffect, useState } from "react"
-import {Footer} from "@atoms";
+import { Footer } from "@atoms"
+import useMediaQuery from "use-media-antd-query"
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({
   children
@@ -19,20 +20,22 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({
 
   if (!mounted) return null
 
-    return (
-        <div className="app-container relative min-h-screen flex flex-col">
-            <VideoBackground />
-            <div className="content-overlay flex flex-col flex-1">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-            </div>
-        </div>
-    )
+  return (
+    <div className="app-container relative min-h-screen flex flex-col">
+      <VideoBackground />
+      <div className="content-overlay flex flex-col flex-1">
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    </div>
+  )
 }
 
-export const VideoBackground = () => {
+export const VideoBackground: React.FC = () => {
   const { theme } = useTheme()
+  const colSize = useMediaQuery()
+  const isMbl = ["xs", "sm"].includes(colSize)
   const [isLight, setIsLight] = useState(true)
 
   useEffect(() => {
@@ -53,7 +56,10 @@ export const VideoBackground = () => {
         loop
         playsInline
       >
-        <source src="/mp4/day-bg.mp4" type="video/mp4" />
+        <source
+          src={isMbl ? "/mp4/mbl-day-bg.webm" : "/mp4/day-bg.mp4"}
+          type={isMbl ? "video/webm" : "video/mp4"}
+        />
       </video>
 
       {/* Night video */}
@@ -66,7 +72,10 @@ export const VideoBackground = () => {
         loop
         playsInline
       >
-        <source src="/mp4/night-bg.mp4" type="video/mp4" />
+        <source
+          src={isMbl ? "/mp4/mbl-night-bg.webm" : "/mp4/night-bg.mp4"}
+          type={isMbl ? "video/webm" : "video/mp4"}
+        />
       </video>
     </div>
   )
