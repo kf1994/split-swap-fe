@@ -164,26 +164,26 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
       </div>
 
       {/* Selected tokens as pills (duplicates allowed) */}
-      {selectedTokens && selectedTokens.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {selectedTokens?.map((s: string, idx: number) => (
-            <span
-              key={idx}
-              className="flex items-center gap-1 bg-[#383D56] text-white text-sm px-2 py-1 rounded-lg"
-            >
-              {s}
-              <button
-                className="ml-1 text-[#A6A0BB] hover:text-white"
-                onClick={() => {
-                  handleRemove(idx)
-                }}
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
+      {/* {selectedTokens && selectedTokens.length > 0 && ( */}
+      {/*   <div className="flex flex-wrap gap-2 mt-2"> */}
+      {/*     {selectedTokens?.map((s: string, idx: number) => ( */}
+      {/*       <span */}
+      {/*         key={idx} */}
+      {/*         className="flex items-center gap-1 bg-[#383D56] text-white text-sm px-2 py-1 rounded-lg" */}
+      {/*       > */}
+      {/*         {s} */}
+      {/*         <button */}
+      {/*           className="ml-1 text-[#A6A0BB] hover:text-white" */}
+      {/*           onClick={() => { */}
+      {/*             handleRemove(idx) */}
+      {/*           }} */}
+      {/*         > */}
+      {/*           ✕ */}
+      {/*         </button> */}
+      {/*       </span> */}
+      {/*     ))} */}
+      {/*   </div> */}
+      {/* )} */}
 
       {/* Token List */}
       <div className="max-h-[340px] flex flex-col gap-2 overflow-y-auto thin-scrollbar">
@@ -207,10 +207,10 @@ export const TokensList: React.FC<TokenDropdownProps> = () => {
                 <button
                   key={token.key}
                   disabled={isTokenDisabled(token.__raw)}
-                  onClick={() =>
+                  onClick={() => {
                     !isTokenDisabled(token.__raw) &&
-                    handleSelect(token.symbol, token.__raw)
-                  }
+                      handleSelect(token.symbol, token.__raw)
+                  }}
                   className={`flex items-center gap-3 w-full p-3 rounded-[16px] text-left ${
                     isTokenDisabled(token.__raw)
                       ? "bg-gray-600 cursor-not-allowed opacity-50"

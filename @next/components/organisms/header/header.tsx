@@ -14,7 +14,7 @@ import {
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import useMediaQuery from "use-media-antd-query"
-import { CustomButton, CustomTooltip, Drawer } from "@atoms"
+import { ActionMainButton, CustomButton, CustomTooltip, Drawer } from "@atoms"
 import { useRouter } from "next/navigation"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
@@ -79,11 +79,22 @@ export const Header: React.FC = () => {
       <img
         src={"/images/main-split.gif"}
         alt={"Split"}
-        className={"cursor-pointer h-[50px]"}
+        className={"cursor-pointer h-[55px]"}
         onClick={() => {
-          router.push("/")
+          router.push("/swap")
         }}
       />
+      {/* <video */}
+      {/*   src="/images/main-split.mp4" */}
+      {/*   autoPlay */}
+      {/*   loop */}
+      {/*   muted */}
+      {/*   playsInline */}
+      {/*   className={"cursor-pointer h-[40px]"} */}
+      {/*   onClick={() => { */}
+      {/*     router.push("/swap") */}
+      {/*   }} */}
+      {/* /> */}
 
       {/* Right Section */}
       {!isMbl && (
@@ -103,15 +114,14 @@ export const Header: React.FC = () => {
           {/* Connect Wallet */}
           {!connected && (
             <CustomButton
-              variant={"connect"}
+              variant={"gray-bold"}
               disabled={false}
-              className={"flex items-center  h-[48px]"}
               onClick={() => {
                 setVisible(true)
               }}
+              labelClassName={"text-white text-[16px] font-bold flex"}
             >
-              {/* <WalletIcon width={16} height={16} /> */}
-              <p className={"text-[16px] font-bold flex"}>Connect wallet </p>
+              Connect wallet
             </CustomButton>
           )}
 
@@ -205,7 +215,12 @@ export const Header: React.FC = () => {
             " cursor-pointer h-[30px] relative  bg-[linear-gradient(81deg, rgba(136, 147, 162, 0.80) 41.26%, rgba(163, 171, 183, 0.80) 58.85%)]  p-2 border border-white icon-bg rounded-full"
           }
         >
-          <BurgerMenuIcon style={{ position: "relative", top: "1px" }} />
+          <BurgerMenuIcon
+            style={{
+              position: "relative",
+              top: "1px"
+            }}
+          />
         </div>
       )}
       <Drawer

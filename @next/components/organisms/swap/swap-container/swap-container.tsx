@@ -7,7 +7,7 @@ import { SwapArrowIcon } from "@svgs"
 import { SendBlock } from "../../../molecules/send-swap/send-block"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { ActionButton, CustomButton } from "@atoms"
+import { ActionMainButton, CustomButton } from "@atoms"
 import { usePrivateSwap } from "../../../../providers"
 import { useTokenBalance, useUsdPrice } from "@hooks"
 import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
@@ -127,10 +127,11 @@ export const SwapContainer: React.FC = () => {
                 onChange={setToValue}
                 section={"swap"}
               />
-              <ActionButton
+              <ActionMainButton
                 actionMainButtonMode={actionMainButtonMode}
                 loading={false}
                 className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
+                labelClassName={"text-white text-[16px] font-bold"}
                 swap={() => {
                   if (swap.from && swap.to && walletAddress) {
                     void privateSwap.integratePrivateSwap(
@@ -152,7 +153,7 @@ export const SwapContainer: React.FC = () => {
               <SendBlock />
               <CustomButton
                 disabled={true}
-                variant={"swap"}
+                variant={"linear-blue"}
                 className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
               >
                 <p className={"text-[16px] font-bold"}>Swap</p>

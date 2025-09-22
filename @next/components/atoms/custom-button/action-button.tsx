@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 "use client"
-
-import { CustomButton } from "./custom-button"
+import { CustomButton } from "@atoms"
+import { useWalletModal } from "@solana/wallet-adapter-react-ui"
+import { clsxm } from "@utils"
 
 export type ActionMainButtonMode =
   | "connect-wallet"
@@ -15,22 +15,31 @@ export type ActionMainButtonMode =
   | "withdraw"
   | "not-whitelisted"
 
-interface ActionButtonProps {
+interface ActionMainButtonProps {
   actionLabel?: string
-  actionMainButtonMode: string
+  actionMainButtonMode: ActionMainButtonMode
   loading: boolean
+  borrow?: () => void
   swap?: () => void
+  withdraw?: () => void
   className?: string
+  labelClassName?: string
 }
 
-export const ActionButton = ({
+export const ActionMainButton = ({
   actionLabel,
   actionMainButtonMode,
   loading,
+  borrow,
   swap,
-  className
-}: ActionButtonProps) => {
-  function getLabelByMode(mode: string) {
+  withdraw,
+  className,
+  labelClassName
+}: ActionMainButtonProps) => {
+  const { setVisible } = useWalletModal()
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function getLabelByMode(mode: ActionMainButtonMode) {
     switch (mode) {
       case "connect-wallet":
         return "Connect wallet"
@@ -54,27 +63,59 @@ export const ActionButton = ({
     }
   }
 
-  function getClickHandlerByMode(mode: string) {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function getColorByMode(mode: ActionMainButtonMode) {
+    console.log("MODE==>", mode)
+    switch (mode) {
+      case "swap":
+      case "withdraw":
+      case "connect-wallet":
+        return "linear-blue"
+      case "no-connection":
+      case "confirming":
+      case "restricted":
+      case "enter-amount":
+      case "not-whitelisted":
+      case "insufficient-funds":
+        return "purple-light"
+      case "no-liquidity":
+        return "gray-bold"
+      default:
+        return "linear-blue"
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function getClickHandlerByMode(mode: ActionMainButtonMode) {
     switch (mode) {
       case "swap": {
         swap?.()
         return
       }
-
+      case "withdraw": {
+        withdraw?.()
+        return
+      }
+      case "connect-wallet": {
+        setVisible(true)
+        return
+      }
       default:
         return null
     }
   }
 
-  function isDisabledByMode(mode: string, loading: boolean) {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  function isDisabledByMode(mode: ActionMainButtonMode, loading: boolean) {
     switch (mode) {
       case "no-connection":
       case "restricted":
       case "enter-amount":
       case "insufficient-funds":
       case "not-whitelisted":
-        //   case "swap":
-        return true
+      case "swap":
+      case "withdraw":
+        return loading
       default:
         return false
     }
@@ -82,9 +123,12 @@ export const ActionButton = ({
 
   return (
     <CustomButton
+      className={clsxm(className)}
+      variant={getColorByMode(actionMainButtonMode)}
       disabled={isDisabledByMode(actionMainButtonMode, loading)}
       onClick={() => getClickHandlerByMode(actionMainButtonMode)}
-      className={className}
+      loading={loading}
+      labelClassName={labelClassName}
       // icon={<PoweroffOutlined style={{ color: "#70ED7E" }} />}
     >
       {getLabelByMode(actionMainButtonMode)}

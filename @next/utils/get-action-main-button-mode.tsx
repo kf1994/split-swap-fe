@@ -1,5 +1,6 @@
 "use client"
 import { stringToNumber } from "./string-to-number"
+import { type ActionMainButtonMode } from "@atoms"
 
 interface GetActionButtonModeProps {
   isOnline: boolean
@@ -17,7 +18,7 @@ export const getActionMainButtonMode = ({
   solInput,
   maxAvailableFunds,
   loading
-}: GetActionButtonModeProps): string => {
+}: GetActionButtonModeProps): ActionMainButtonMode => {
   const numberAmount = stringToNumber(solInput)
   switch (true) {
     case !isOnline:
