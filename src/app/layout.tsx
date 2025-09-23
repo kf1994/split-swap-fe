@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   title: "Split Swap",
   description: "Split Swap",
   icons: {
-    icon: "/fav.jpg"
+    icon: "/fav.gif"
   },
   openGraph: {
     title: "Split Swap",
