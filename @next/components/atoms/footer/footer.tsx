@@ -20,7 +20,7 @@ export const Footer = () => {
             height={48}
           />
         </a>
-        <a href="/" target="_blank">
+        <a href="https://split-swap.gitbook.io/product-docs" target="_blank">
           <Image src={"/images/docs.png"} alt={"docs"} width={48} height={48} />
         </a>
         <a href="https://x.com/Split_Swap" target="_blank">
