@@ -8,7 +8,7 @@ import { type TokenInfoInterface } from "@types"
 export class TokenService extends BaseService {
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async searchToken({ query }: { query?: string }) {
-    let url = `${API_HOST}/tokens/search`
+    let url = `${API_HOST}/trade-buffer/search`
     if (query) {
       url += `?query=${query}`
     }
