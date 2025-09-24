@@ -243,7 +243,7 @@ export const SendBottomSection: React.FC = () => {
           </div>
         )}
 
-        {wallets.length >= 2 && (
+        {wallets.length >= 1 && (
           <div className="bg-[#444A66] px-4 py-3 rounded-xl flex justify-between items-center text-white text-sm">
             <span>Distribution</span>
             <div className="flex items-center gap-2">
