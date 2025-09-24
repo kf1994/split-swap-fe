@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { SendWalletInput } from "./send-wallet-input"
 import { PublicKey } from "@solana/web3.js"
 import Papa from "papaparse"
@@ -28,12 +28,17 @@ export const SendBottomSection: React.FC = () => {
     setWallets((prev) => prev.map((w) => ({ ...w, percentage: equalShare })))
   }
 
-  const toggleDistribution = (checked: boolean) => {
-    setDistributionEnabled((prev) => !prev)
-    if (checked && wallets.length > 0) {
+  const toggleDistribution = (): void => {
+    setDistributionEnabled((prev) => {
+      return !prev
+    })
+  }
+
+  useEffect(() => {
+    if (distributionEnabled && wallets.length > 0) {
       applyDistribution(wallets.length)
     }
-  }
+  }, [wallets.length, distributionEnabled])
 
   const handleImportClick = (): void => {
     if (fileInputRef.current) {
@@ -252,7 +257,9 @@ export const SendBottomSection: React.FC = () => {
               </span>
               <button
                 type="button"
-                onClick={toggleDistribution}
+                onClick={() => {
+                  toggleDistribution()
+                }}
                 className={`w-[28px] h-4 flex items-center rounded-full transition-colors duration-300 ${
                   distributionEnabled ? "bg-[#7B61FF]" : "bg-gray-500"
                 }`}
