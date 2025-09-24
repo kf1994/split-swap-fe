@@ -151,13 +151,6 @@ export const SwapContainer: React.FC = () => {
           {activeTab === "send" && (
             <>
               <SendBlock />
-              <CustomButton
-                disabled={true}
-                variant={"linear-blue"}
-                className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
-              >
-                <p className={"text-[16px] font-bold"}>Swap</p>
-              </CustomButton>
             </>
           )}
         </div>

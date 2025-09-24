@@ -211,3 +211,20 @@
 .swap-btn-animation:hover {
     transform: rotate(180deg);
 }
+
+.smart-scroll {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #7c5cff transparent;
+}
+
+.smart-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+.smart-scroll::-webkit-scrollbar-thumb {
+    background: #4e3d8f;
+    border-radius: 8px;
+}
+.smart-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}

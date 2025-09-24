@@ -18,7 +18,7 @@ export const SendWalletInput: React.FC<SendWalletRowProps> = ({
 }) => {
   console.log("===>", percentage)
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 mt-1">
       {/* Address input */}
       <div className="flex-1">
         <input
