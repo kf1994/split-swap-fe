@@ -2,16 +2,19 @@
 import type React from "react"
 import { useRef, useState } from "react"
 import { SendWalletInput } from "./send-wallet-input"
+import { PublicKey } from "@solana/web3.js"
 
 interface Wallet {
   id: number
   address: string
-  percentage: number
+  percentage: string
+  error?: string
 }
 
 export const SendBottomSection: React.FC = () => {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [initialAddress, setInitialAddress] = useState<string>("")
+  const [initialError, setInitialError] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -22,8 +25,25 @@ export const SendBottomSection: React.FC = () => {
     }
   }
 
+  const validateSolanaAddress = (
+    address: string
+  ): { isValid: boolean; error?: string } => {
+    try {
+      const publicKey = new PublicKey(address)
+      if (!PublicKey.isOnCurve(publicKey.toBytes())) {
+        return { isValid: false, error: "Invalid: not an on-curve wallet" }
+      }
+      return { isValid: true }
+    } catch {
+      return { isValid: false, error: "Invalid wallet address" }
+    }
+  }
+
   const addWallet = (): void => {
-    setWallets([...wallets, { id: Date.now(), address: "", percentage: 0 }])
+    setWallets([
+      ...wallets,
+      { id: Date.now(), address: "", percentage: "", error: "" }
+    ])
   }
 
   const updateWallet = (
@@ -32,7 +52,16 @@ export const SendBottomSection: React.FC = () => {
     value: any
   ): void => {
     setWallets((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, [field]: value } : w))
+      prev.map((w) => {
+        if (w.id === id) {
+          if (field === "address") {
+            const validation = validateSolanaAddress(value)
+            return { ...w, address: value, error: validation.error ?? "" }
+          }
+          return { ...w, [field]: value }
+        }
+        return w
+      })
     )
   }
 
@@ -69,18 +98,21 @@ export const SendBottomSection: React.FC = () => {
         .filter(Boolean)
 
       // Example: CSV with only addresses OR with address,percentage
-      const parsedWallets: Wallet[] = rows.map((row, i) => {
+      const parsedWallets: Wallet[] = rows.map((row) => {
         const [address, perc] = row.split(",")
+        const validation = validateSolanaAddress(address.trim())
         return {
+          id: Date.now() + Math.random(),
           address: address.trim(),
-          percentage: perc ? Number(perc.trim()) : 0
-        } as unknown as Wallet
+          percentage: perc ? perc.trim() : "",
+          error: validation.error ?? ""
+        }
       })
 
       setWallets(parsedWallets)
       setTimeout(() => {
         setLoading(false)
-      }, 800) // small delay to show full progress
+      }, 800)
     }
     reader.onerror = () => {
       console.error("File reading error")
@@ -89,6 +121,7 @@ export const SendBottomSection: React.FC = () => {
 
     reader.readAsText(file)
   }
+
   return (
     <div className="bg-[#383D56] mt-[6px] flex flex-col gap-2 rounded-xl p-4 w-full">
       {/* Receiving address header */}
@@ -120,11 +153,33 @@ export const SendBottomSection: React.FC = () => {
           placeholder="Receiving wallet address"
           value={initialAddress}
           onChange={(e) => {
-            setInitialAddress(e.target.value)
+            const value = e.target.value
+            setInitialAddress(value)
+            const validation = validateSolanaAddress(value)
+            setInitialError(validation.error ?? "")
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && initialAddress.trim()) {
+              const validation = validateSolanaAddress(initialAddress.trim())
+              setWallets((prev) => [
+                ...prev,
+                {
+                  id: Date.now(),
+                  address: initialAddress.trim(),
+                  percentage: "",
+                  error: validation.error ?? ""
+                }
+              ])
+              setInitialAddress("")
+              setInitialError("")
+            }
           }}
           className="flex-1 border border-[#46456C] rounded-xl bg-[#383D56] w-full px-4 py-3 text-sm text-white
              outline-none focus:outline-none focus:border-[#46456C]"
         />
+        {initialError && (
+          <p className="text-red-400 text-xs mt-1">{initialError}</p>
+        )}
       </div>
 
       {/* Progress bar */}
@@ -139,20 +194,22 @@ export const SendBottomSection: React.FC = () => {
 
       {/* Wallet list */}
       {wallets.map((w) => (
-        <SendWalletInput
-          key={w.id}
-          address={w.address}
-          percentage={w.percentage}
-          onAddressChange={(val) => {
-            updateWallet(w.id, "address", val)
-          }}
-          onPercentageChange={(val) => {
-            updateWallet(w.id, "percentage", val)
-          }}
-          onRemove={() => {
-            removeWallet(w.id)
-          }}
-        />
+        <div key={w.id}>
+          <SendWalletInput
+            address={w.address}
+            percentage={w.percentage}
+            onAddressChange={(val) => {
+              updateWallet(w.id, "address", val)
+            }}
+            onPercentageChange={(val) => {
+              updateWallet(w.id, "percentage", val)
+            }}
+            onRemove={() => {
+              removeWallet(w.id)
+            }}
+          />
+          {w.error && <p className="text-red-400 text-xs mt-1">{w.error}</p>}
+        </div>
       ))}
 
       {/* Add wallet button */}
