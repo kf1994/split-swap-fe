@@ -68,7 +68,6 @@ export const SendBottomSection: React.FC = () => {
     const updated = [...wallets, newWallet]
     setWallets(updated)
 
-    // 🔹 If distribution is ON, re-apply equal share
     if (distributionEnabled) {
       applyDistribution(updated.length)
     }
@@ -86,7 +85,6 @@ export const SendBottomSection: React.FC = () => {
             const validation = validateSolanaAddress(value)
             return { ...w, address: value, error: validation.error ?? "" }
           }
-          // 🔹 If distribution is ON, percentage should not be editable
           if (distributionEnabled && field === "percentage") {
             return w
           }
@@ -101,41 +99,73 @@ export const SendBottomSection: React.FC = () => {
     setWallets(wallets.filter((w) => w.id !== id))
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const renderBatch = (rows: Wallet[], batchSize = 500): void => {
+    let index = 0
+
+    const renderNext = (): void => {
+      const slice = rows.slice(index, index + batchSize)
+      setWallets((prev) => [...prev, ...slice])
+      index += batchSize
+
+      setProgress(Math.min(100, Math.round((index / rows.length) * 100)))
+
+      if (index < rows.length) {
+        setTimeout(renderNext, 0) // yield to UI
+      } else {
+        setLoading(false)
+        if (distributionEnabled) {
+          applyDistribution(rows.length)
+        }
+      }
+    }
+
+    renderNext()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0]
     if (!file) return
     setLoading(true)
     setProgress(0)
+    setWallets([]) // reset
+
+    const parsedRows: Wallet[] = []
+    let parsedCount = 0
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: any) => {
-        const data = results.data as Array<{ address: string }>
-        const unique = Array.from(
-          new Set(data.map((row) => row.address.trim()))
-        )
-        const newWallets: Wallet[] = unique.map((addr, index) => {
-          const validation = validateSolanaAddress(addr)
-          return {
-            id: Date.now() + index,
-            address: addr,
-            percentage: distributionEnabled
-              ? (100 / unique.length).toFixed(2)
-              : "",
-            error: validation.error ?? ""
-          }
+      worker: true,
+      step: (row: any) => {
+        const addr = row.data.address?.trim()
+        if (!addr) return
+
+        const validation = validateSolanaAddress(addr)
+        parsedRows.push({
+          id: Date.now() + parsedCount,
+          address: addr,
+          percentage: "",
+          error: validation.error ?? ""
         })
-        setWallets(newWallets)
-        setProgress(100)
-        setLoading(false)
-        if (distributionEnabled && newWallets.length > 0) {
-          applyDistribution(newWallets.length)
-        }
+
+        parsedCount++
+      },
+      complete: () => {
+        renderBatch(parsedRows) // render incrementally
       }
     })
-    e.target.value = ""
+
+    e.target.value = "" // reset input
   }
+
+  const hasInvalidAddress =
+    !!initialError || wallets.some((w) => w.error && w.error.length > 0)
+
+  const totalPercentage = wallets.reduce(
+    (sum, w) => sum + (parseFloat(w.percentage) || 0),
+    0
+  )
+  const isSwapDisabled = hasInvalidAddress || totalPercentage > 100
 
   return (
     <div>
@@ -272,7 +302,7 @@ export const SendBottomSection: React.FC = () => {
       </div>
 
       <CustomButton
-        disabled={true}
+        disabled={isSwapDisabled}
         variant={"linear-blue"}
         className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
       >

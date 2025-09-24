@@ -77,9 +77,9 @@ export const Header: React.FC = () => {
       {/* Logo */}
 
       <img
-        src={"/images/main-split.gif"}
+        src={"/images/split.gif"}
         alt={"Split"}
-        className={"cursor-pointer h-[120px]"}
+        className={"cursor-pointer h-[50px]"}
         onClick={() => {
           router.push("/swap")
         }}
