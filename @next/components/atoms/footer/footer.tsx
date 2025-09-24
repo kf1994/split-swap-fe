@@ -1,8 +1,8 @@
-import type React from "react"
 import Image from "next/image"
 import useMediaQuery from "use-media-antd-query"
+import type React from "react"
 
-export const Footer = () => {
+export const Footer: React.FC = () => {
   const colSize = useMediaQuery()
   const isMbl = ["xs", "sm"].includes(colSize)
   return (

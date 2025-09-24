@@ -20,7 +20,7 @@ export function useUsdPrice(
   const fetchJupiter = async () => {
     if (!address || chain !== "solana") return null
     try {
-      const url = `https://price.jup.ag/v4/price?ids=${address}`
+      const url = `https://lite-api.jup.ag/price/v2?ids=${address}`
       const res = await fetch(url, { cache: "no-store" })
       if (!res.ok) return null
       const json = await res.json()
