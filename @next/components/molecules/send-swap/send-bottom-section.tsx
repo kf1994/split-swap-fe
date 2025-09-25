@@ -5,6 +5,7 @@ import { SendWalletInput } from "./send-wallet-input"
 import { PublicKey } from "@solana/web3.js"
 import Papa from "papaparse"
 import { CustomButton } from "@atoms"
+import { Tooltip } from "../../atoms/custom-tooltip"
 
 interface Wallet {
   id: number
@@ -24,8 +25,21 @@ export const SendBottomSection: React.FC = () => {
   const [distributionEnabled, setDistributionEnabled] = useState(false)
 
   const applyDistribution = (count: number): void => {
-    const equalShare = (100 / count).toFixed(2)
-    setWallets((prev) => prev.map((w) => ({ ...w, percentage: equalShare })))
+    if (count === 0) return
+    const randoms = Array.from({ length: count }, () => Math.random())
+
+    const total = randoms.reduce((a, b) => a + b, 0)
+    const percentages = randoms.map((r) => (r / total) * 100)
+
+    const rounded = percentages.map((p) => parseFloat(p.toFixed(2)))
+    const diff = 100 - rounded.reduce((a, b) => a + b, 0)
+    rounded[rounded.length - 1] = parseFloat(
+      (rounded[rounded.length - 1] + diff).toFixed(2)
+    )
+
+    setWallets((prev) =>
+      prev.map((w, i) => ({ ...w, percentage: rounded[i].toFixed(2) }))
+    )
   }
 
   const toggleDistribution = (): void => {
@@ -180,27 +194,29 @@ export const SendBottomSection: React.FC = () => {
           <span className="text-sm font-normal text-white">
             Receiving wallet address
           </span>
-
-          <label>
-            <button
-              type="button"
-              onClick={handleImportClick}
-              className="border border-[#A6A0BB] text-white text-sm px-4 py-2 rounded-xl "
-            >
-              Import
-            </button>
-            <input
-              type="file"
-              accept=".csv,.txt"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-          </label>
+          <Tooltip text={"Upload CSV file (first column = address)."}>
+            {" "}
+            <label>
+              <button
+                type="button"
+                onClick={handleImportClick}
+                className="border border-[#A6A0BB] text-white text-sm px-4 py-2 rounded-xl "
+              >
+                Import
+              </button>
+              <input
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+            </label>
+          </Tooltip>
         </div>
 
         {/* Initial input */}
-        {wallets.length < 2 && (
+        {wallets.length < 1 && (
           <div>
             <input
               placeholder="Receiving wallet address"
@@ -282,6 +298,7 @@ export const SendBottomSection: React.FC = () => {
               <SendWalletInput
                 address={w.address}
                 percentage={w.percentage}
+                isDisabled={distributionEnabled}
                 onAddressChange={(val) => {
                   updateWallet(w.id, "address", val)
                 }}

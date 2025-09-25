@@ -3,10 +3,11 @@ import { MinusCircleIcon } from "@svgs"
 
 interface SendWalletRowProps {
   address: string
-  percentage: string
+  percentage: string | number
   onAddressChange: (v: string) => void
   onPercentageChange: (v: number) => void
   onRemove?: () => void
+  isDisabled: boolean
 }
 
 export const SendWalletInput: React.FC<SendWalletRowProps> = ({
@@ -14,9 +15,9 @@ export const SendWalletInput: React.FC<SendWalletRowProps> = ({
   percentage,
   onAddressChange,
   onPercentageChange,
-  onRemove
+  onRemove,
+  isDisabled
 }) => {
-  console.log("===>", percentage)
   return (
     <div className="flex items-center gap-2 mt-1">
       {/* Address input */}
@@ -45,8 +46,9 @@ export const SendWalletInput: React.FC<SendWalletRowProps> = ({
             inputMode="decimal"
             min={0}
             max={100}
+            disabled={isDisabled}
             step="0.01"
-            value={percentage === "" ? "" : String(Number(percentage))}
+            value={percentage === 0 ? "" : percentage}
             onChange={(e) => {
               onPercentageChange(Number(e.target.value))
             }}
@@ -57,6 +59,7 @@ export const SendWalletInput: React.FC<SendWalletRowProps> = ({
               text-sm text-white
               outline-none focus:border-[#46456C]
               [appearance:textfield]
+              disabled:cursor-not-allowed
               [&::-webkit-outer-spin-button]:appearance-none
               [&::-webkit-inner-spin-button]:appearance-none
             "
