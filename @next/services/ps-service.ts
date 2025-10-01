@@ -217,7 +217,7 @@ export class PSService {
 
     const amountBN = new BN(Math.floor(Number(amount) * 10 ** decimals))
 
-    // Optional: Deposit if required
+    // // Optional: Deposit if required
     const depositTx = await this.depositOnL1(
       new PublicKey(fromToken),
       amountBN,
@@ -225,9 +225,10 @@ export class PSService {
     )
     console.log("Deposit:", depositTx)
 
-    const tradeBufferIndex = 0
+    const tradeBufferIndex = 4
+    const trade_buffer_address = "4MxQc1SgWzFCKLhBnbBYHkFzZKfZqVLFz7JEZ4rLFxLC"
     const tradeTx = await this.placeTrade(
-      new PublicKey(userAddress), // who’s trading
+      new PublicKey(trade_buffer_address), // who’s trading
       tradeBufferIndex,
       new PublicKey(fromToken),
       new PublicKey(toToken),
