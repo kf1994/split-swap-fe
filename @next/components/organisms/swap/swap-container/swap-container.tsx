@@ -7,7 +7,7 @@ import { SwapArrowIcon } from "@svgs"
 import { SendBlock } from "../../../molecules/send-swap/send-block"
 import { userProfileStore } from "@store"
 import { useShallow } from "zustand/react/shallow"
-import { ActionMainButton, CustomButton } from "@atoms"
+import { ActionMainButton } from "@atoms"
 import { usePrivateSwap } from "../../../../providers"
 import { useTokenBalance, useUsdPrice } from "@hooks"
 import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
@@ -31,15 +31,15 @@ export const SwapContainer: React.FC = () => {
     swap.to?.address,
     "solana"
   )
-  console.log(toTokenPrice, "CHECK TWO TOKEN PRICE")
 
   const { connected } = useWallet()
   const { balance } = useTokenBalance(walletAddress, swap.from.address)
   const [fromValue, setFromValue] = useState("0.022")
   const [toValue, setToValue] = useState("0.022")
-
+  const [loading, setLoading] = useState(false)
   const privateSwap = usePrivateSwap()
   const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
+  console.log(loading, "CHECK SWAP LOADING")
 
   const handleSwap = (): void => {
     // setFromValue(toValue)
@@ -53,7 +53,7 @@ export const SwapContainer: React.FC = () => {
     confirming: false,
     solInput: fromValue?.toString(),
     maxAvailableFunds: balance ?? 0,
-    loading: false
+    loading: loading
   })
   useEffect(() => {
     if (fromTokenPrice && toTokenPrice) {
@@ -67,7 +67,23 @@ export const SwapContainer: React.FC = () => {
   const handleTabClick = (tab: "swap" | "send") => {
     router.push(`/${tab}`) // updates URL but doesn’t reload
   }
-
+  const swapHandler = async () => {
+    try {
+      if (swap.from && swap.to && walletAddress) {
+        setLoading(true)
+        const res = await privateSwap.integratePrivateSwap(
+          swap.from.address,
+          swap.to.address,
+          fromValue,
+          swap.from.decimals ?? 6,
+          walletAddress
+        )
+        setLoading(false)
+      }
+    } catch (error) {
+      setLoading(false)
+    }
+  }
   return (
     <>
       {currentState === "1" && (
@@ -129,20 +145,10 @@ export const SwapContainer: React.FC = () => {
               />
               <ActionMainButton
                 actionMainButtonMode={actionMainButtonMode}
-                loading={false}
+                loading={loading}
                 className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
                 labelClassName={"text-white text-[16px] font-bold"}
-                swap={() => {
-                  if (swap.from && swap.to && walletAddress) {
-                    void privateSwap.integratePrivateSwap(
-                      swap.from.address,
-                      swap.to.address,
-                      fromValue, // user input
-                      swap.from.decimals ?? 6, // decimals
-                      walletAddress
-                    )
-                  }
-                }}
+                swap={swapHandler}
               />
             </div>
           )}

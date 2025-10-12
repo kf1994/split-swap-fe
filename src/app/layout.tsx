@@ -5,7 +5,9 @@ import type { Metadata } from "next"
 import { MainLayout } from "@layouts"
 import type React from "react"
 import { RootProviders, WindowProvider } from "../../@next/components/providers"
-
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+import { ToastNotifier } from "@atoms"
 interface RootLayoutProps {
   children: React.ReactNode
   params: Record<string, any>
@@ -25,6 +27,8 @@ const RootLayout = async ({ children }: RootLayoutProps) => {
               <MainLayout>{children}</MainLayout>
             </main>
           </RootProviders>
+          <ToastNotifier />
+          <ToastContainer position="bottom-right" autoClose={4000} />
         </WindowProvider>
       </body>
     </html>

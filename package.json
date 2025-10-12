@@ -43,6 +43,7 @@
     "react-modal-sheet": "^3.1.0",
     "react-modern-drawer": "^1.4.0",
     "react-redux": "^9.1.2",
+    "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "solana-fallback-connection": "^1.0.1",
     "tailwind-merge": "^2.6.0",
