@@ -1,13 +1,22 @@
+/* eslint-disable curly */
 "use client"
 
 import { type AnchorProvider, BN, Program } from "@coral-xyz/anchor"
 import { PrivateSwap } from "@idls"
-import { PublicKey, SystemProgram } from "@solana/web3.js"
+import {
+  PublicKey,
+  SystemProgram,
+  TransactionMessage,
+  VersionedTransaction
+} from "@solana/web3.js"
 import {
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token"
+import { useAlertStore } from "@store"
+import { tokenService } from "./token-service"
+import BigNumber from "bignumber.js"
 
 export class PSService {
   readonly program: Program<typeof PrivateSwap>
@@ -39,17 +48,78 @@ export class PSService {
     return pda
   }
 
-  async checkUserBalanceExists(): Promise<boolean> {
+  async checkUserBalanceExists(
+    enteredAmount: BN,
+    tokenMint: string
+  ): Promise<{ acc: boolean; balance: boolean }> {
     try {
       const user = this.userPk
-      if (!user) return false
+      if (!user) return { acc: false, balance: false }
+
       const userBalanceAddress = this.deriveUserBalancePda(user)
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      await this.program.account.userBalance.fetch(userBalanceAddress)
-      return true
-    } catch {
-      return false
+      const res = await (
+        this.magicblockProgram.account as any
+      ).userBalance.fetch(userBalanceAddress)
+      console.log(res, "CHECK RESPONSE FROM BALANCE")
+
+      // Convert BN to BigNumber for comparison
+      const entered = new BigNumber(enteredAmount.toString())
+      const tokenMintStr = tokenMint
+
+      // Step 1: Find total balance
+      const balanceObj = res?.balances?.find(
+        (b: any) => b.tokenMint.toString() === tokenMintStr
+      )
+      const totalBalance = new BigNumber(balanceObj?.amount || "0")
+
+      // Step 2: Sum all pending amounts for that token
+      const totalPending =
+        res?.pendingTrades
+          ?.filter(
+            (p: any) =>
+              p?.inputTokenMintWithAmount?.tokenMint?.toString() ===
+              tokenMintStr
+          )
+          ?.reduce((sum: BigNumber, p: any) => {
+            const amt = new BigNumber(
+              p?.inputTokenMintWithAmount?.amount || "0"
+            )
+            return sum.plus(amt)
+          }, new BigNumber(0)) || new BigNumber(0)
+
+      // Step 3: Available = balance - pending
+      const available = totalBalance.minus(totalPending)
+
+      console.log(
+        {
+          entered: entered.toString(),
+          totalBalance: totalBalance.toString(),
+          totalPending: totalPending.toString(),
+          available: available.toString()
+        },
+        "USER BALANCE DETAILS"
+      )
+      const val = res?.balances?.map((item: any) => {
+        console.log(
+          item?.amount?.toString(),
+          item?.tokenMint?.toString(),
+          "CHECK THE BALANCE HERE"
+        )
+      })
+      const val2 = res?.pendingTrades?.map((item: any) => {
+        console.log(
+          item?.inputTokenMintWithAmount?.amount?.toString(),
+          item?.inputTokenMintWithAmount?.tokenMint?.toString(),
+          "CHECK THE PENDING BALANCE"
+        )
+      })
+      // Step 4: Check if available >= entered
+      const isEnough = available.gte(entered)
+
+      return { acc: true, balance: isEnough }
+    } catch (err) {
+      console.error("Error checking user balance:", err)
+      return { acc: false, balance: false }
     }
   }
 
@@ -76,6 +146,40 @@ export class PSService {
       .rpc()
 
     return { signature, userBalance }
+  }
+
+  async getAvailableTradeBufferFrontend(
+    maxIndex = 10
+  ): Promise<{ address: PublicKey; index: number } | null> {
+    for (let i = 0; i < maxIndex; i++) {
+      const indexBuf = Buffer.from([i & 0xff])
+      const [tradeBufferAddress] = PublicKey.findProgramAddressSync(
+        [Buffer.from("trade_buffer"), indexBuf],
+        this.program.programId
+      )
+
+      try {
+        const tradeBuffer = await (
+          this.program.account as any
+        ).tradeBuffer.fetch(tradeBufferAddress)
+
+        // You can add your own conditions here
+        // For example, check if tradeBuffer.isActive, slotsRemaining > 0, etc.
+        // For now, just assume existence means it's available
+        if (tradeBuffer) {
+          console.log(
+            `✅ Found available trade buffer at index ${i}`,
+            tradeBufferAddress.toString()
+          )
+          return { address: tradeBufferAddress, index: i }
+        }
+      } catch (err) {
+        console.log(`❌ No buffer found at index ${i}`)
+      }
+    }
+
+    console.error("No available trade buffer found.")
+    return null
   }
 
   async depositOnL1(
@@ -174,8 +278,8 @@ export class PSService {
     const trader = this.magicUserPk
     if (!trader) return null
 
-    const [globalState] = PublicKey.findProgramAddressSync(
-      [Buffer.from("global_state")],
+    const [orderCounter] = PublicKey.findProgramAddressSync(
+      [Buffer.from("order_counter")],
       this.magicblockProgram.programId
     )
 
@@ -195,11 +299,11 @@ export class PSService {
       .accounts({
         trader,
         userBalance,
-        globalState,
+        orderCounter,
         tradeBuffer
       })
 
-    return await method.rpc()
+    return await method.rpc({ skipPreflight: true })
   }
 
   async integratePrivateSwap(
@@ -208,33 +312,208 @@ export class PSService {
     amount: string,
     decimals: number,
     userAddress: string,
-    slippageBps: number = 100 // 1% default
+    slippageBps: number = 100
   ): Promise<string | null> {
-    const userBalanceExists = await this.checkUserBalanceExists()
-    if (!userBalanceExists) {
-      await this.createUserBalanceState()
+    const { setStep } = useAlertStore.getState()
+
+    try {
+      setStep("checkingBalance")
+      const amountBN = new BN(Math.floor(Number(amount) * 10 ** decimals))
+      const userBalanceExists = await this.checkUserBalanceExists(
+        amountBN,
+        fromToken
+      )
+      console.log(userBalanceExists, "CHECK USER BALANCE EXIST")
+
+      if (!userBalanceExists?.acc) {
+        await this.createUserBalanceState()
+      }
+
+      const availableBuffer = await this.getAvailableTradeBufferFrontend(10)
+
+      if (!availableBuffer) {
+        throw new Error("No available trade buffer found.")
+      }
+      console.log(amountBN?.toNumber(), "CHECK VALUE")
+      console.log(
+        availableBuffer?.address?.toString(),
+        availableBuffer?.index,
+        "CHECK AVAILABLE TRADE BUFFER"
+      )
+      // const availableBuffer = await tokenService?.getAvailableBuffer()
+      console.log(availableBuffer, "CHECK AVAIULABLE BUFFER")
+
+      setStep("depositing")
+      const depositTx = await this.depositOnL1(
+        new PublicKey(fromToken),
+        amountBN,
+        new BN(Date.now())
+      )
+      // await new Promise((resolve) => setTimeout(resolve, 5000))
+      setStep("waitingBalance", depositTx)
+      // console.log("Deposit:", depositTx)
+
+      // Wait until user's deposited balance becomes available
+      const maxRetries = 15
+      const retryDelay = 5000 // 4 seconds between checks
+      let retries = 0
+      let balanceReady = false
+
+      while (retries < maxRetries) {
+        const check = await this.checkUserBalanceExists(amountBN, fromToken)
+        console.log(
+          `Retry #${retries + 1}:`,
+          check,
+          "Waiting for balance update..."
+        )
+
+        if (check?.balance) {
+          balanceReady = true
+          break
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        retries++
+      }
+
+      if (!balanceReady) {
+        throw new Error("Balance not updated after deposit.")
+      }
+      // await new Promise((resolve) => setTimeout(resolve, 1500))
+      setStep("placingTrade")
+      // const tradeBufferIndex = 10
+      // const trade_buffer_address =
+      //   "9t76R1auSvBYG55kpVNFjWGb7AGTFJPTyyCmZ9KzPF1J"
+      // const val = this.createTradeBuffer(2)
+      // console.log(val, "CHECK THE VALUE OF TRADE BUFFER")
+      // const tradeBufferIndex = 0
+      // const bufferData = await this.createTradeBuffer(9)
+      // console.log(bufferData?.tradeBuffer?.toString(), "CHECK THE DATA HERE")
+
+      // const indexBuf = Buffer.from([tradeBufferIndex & 0xff])
+
+      // const [tradeBuffer] = PublicKey.findProgramAddressSync(
+      //   [Buffer.from("trade_buffer"), indexBuf],
+      //   this.program.programId
+      // )
+      // console.log(tradeBuffer.toString(), "CHECK THE TRADE BUFFER ADDRESS")
+      // const bufferAddress = await this.createTradeBuffer(8)
+      // console.log(
+      //   bufferAddress?.tradeBuffer?.toString(),
+      //   "CHECK THE TRADE BUFFER ADDRESS"
+      // )
+
+      // const tradeBufferIndex = 8
+      // const trade_buffer_address =
+      //   "EfY4SU3zfQgjsVy1dJ9g3cQHa9T55JLqcX4MSobQp3mP"
+      // // const value = await this.createTradeBuffer(6)
+      // // console.log(value?.tradeBuffer?.toString(), "CHECK NEW TRADE BUFFER")
+
+      const tradeTx = await this.placeTrade(
+        new PublicKey(availableBuffer?.address.toString()),
+        availableBuffer?.index,
+        new PublicKey(fromToken),
+        new PublicKey(toToken),
+        amountBN,
+        slippageBps
+      )
+
+      setStep("completed", tradeTx)
+      return tradeTx
+    } catch (err) {
+      setStep("failed")
+      console.error("Swap error:", err)
+      return null
     }
-
-    const amountBN = new BN(Math.floor(Number(amount) * 10 ** decimals))
-
-    // Optional: Deposit if required
-    const depositTx = await this.depositOnL1(
-      new PublicKey(fromToken),
-      amountBN,
-      new BN(Date.now()) // nonce
-    )
-    console.log("Deposit:", depositTx)
-
-    const tradeBufferIndex = 0
-    const tradeTx = await this.placeTrade(
-      new PublicKey(userAddress), // who’s trading
-      tradeBufferIndex,
-      new PublicKey(fromToken),
-      new PublicKey(toToken),
-      amountBN,
-      slippageBps
-    )
-
-    return tradeTx
   }
+
+  // async sendTransaction(tx: VersionedTransaction): Promise<string> {
+  //   const provider = this.magicblockProgram.provider
+  //   const latestBlockHash = await provider.connection.getLatestBlockhash()
+  //   const serializeTx2 = VersionedTransaction.deserialize(tx.serialize())
+  //   serializeTx2.message.recentBlockhash = latestBlockHash.blockhash
+  //   const transactionSimulation = await provider.connection.simulateTransaction(
+  //     tx,
+  //     {
+  //       replaceRecentBlockhash: true
+  //     }
+  //   )
+
+  //   const transactionLogs = transactionSimulation.value.logs
+
+  //   console.log(transactionLogs, "transactionLogs")
+  //   if (!provider.publicKey) return ""
+  //   let signature = null
+  //   let regularWalletSignedTx = null
+
+  //    const signedTx = await wallet.signAllTransactions?.([tx])
+  //   if (!signedTx) {
+  //     throw new Error("Transaction Simulation Failed")
+  //   }
+  //   regularWalletSignedTx = signedTx
+  //   signature = encode(signedTx[0].signatures[0] as Uint8Array)
+  //   // }
+
+  //   const infoForSentry = {
+  //     walletAddress: provider.publicKey?.toBase58(),
+  //     deviceUsed: userDevice,
+  //     ...txDetailsForSentry
+  //   }
+
+  //   console.log("transactionLogs", transactionLogs)
+
+  //   if (regularWalletSignedTx) {
+  //     try {
+  //       let transactions = [
+  //         encode(regularWalletSignedTx[0]?.serialize()),
+  //         encode(regularWalletSignedTx[1]?.serialize())
+  //       ]
+  //       if (tx2) {
+  //         transactions = [
+  //           encode(regularWalletSignedTx[0]?.serialize()),
+  //           encode(regularWalletSignedTx[1]?.serialize()),
+  //           encode(regularWalletSignedTx[2]?.serialize())
+  //         ]
+  //       }
+  //       const sendBundle = async () => {
+  //         await axios.post(
+  //           `${process.env.NEXT_PUBLIC_API_HOST}/tokens/send-bundle-array`,
+  //           {
+  //             jsonrpc: "2.0",
+  //             id: 1,
+  //             method: "sendBundle",
+  //             transactions
+  //           }
+  //         )
+  //         // await axios.post("https://mainnet.block-engine.jito.wtf/api/v1/bundles", {
+  //         //   jsonrpc: "2.0",
+  //         //   id: 1,
+  //         //   method: "sendBundle",
+  //         //   params: transactions
+  //         // })
+  //       }
+  //       if (!tx2) {
+  //         await connection.sendRawTransaction(
+  //           regularWalletSignedTx[0].serialize(),
+  //           {
+  //             skipPreflight: true
+  //           }
+  //         )
+  //       }
+  //       const RETRIES = 3
+  //       for (let attempt = 1; attempt <= RETRIES; attempt++) {
+  //         try {
+  //           await sendBundle()
+  //         } catch (e) {
+  //           if (attempt < RETRIES) {
+  //             console.error(`Attempt ${attempt} failed. Retrying...`)
+  //             setTimeout(() => {}, 1000)
+  //             continue
+  //           }
+  //           console.error(e)
+  //         }
+  //       }
+  //     } catch (error) {}
+  //   }
+  // }
 }

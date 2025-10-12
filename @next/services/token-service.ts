@@ -15,6 +15,11 @@ export class TokenService extends BaseService {
     const response = await this.http<{ data: TokenInfoInterface[] }>(url)
     return response?.data?.data
   }
+
+  getAvailableBuffer = async () => {
+    const { data } = await this.http.get(`/trade-buffer/available-buffer`)
+    return data
+  }
 }
 
 export const tokenService = new TokenService()

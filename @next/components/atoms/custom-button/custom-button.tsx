@@ -51,7 +51,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
       {...props}
     >
       {loading && (
-        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
       )}
       <span className={labelClassName}>{children}</span>
     </button>
