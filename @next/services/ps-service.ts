@@ -57,9 +57,9 @@ export class PSService {
       if (!user) return { acc: false, balance: false }
 
       const userBalanceAddress = this.deriveUserBalancePda(user)
-      const res = await this.magicblockProgram.account.userBalance.fetch(
-        userBalanceAddress
-      )
+      const res = await (
+        this.magicblockProgram.account as any
+      ).userBalance.fetch(userBalanceAddress)
       console.log(res, "CHECK RESPONSE FROM BALANCE")
 
       // Convert BN to BigNumber for comparison
@@ -99,14 +99,14 @@ export class PSService {
         },
         "USER BALANCE DETAILS"
       )
-      const val = res?.balances?.map((item) => {
+      const val = res?.balances?.map((item: any) => {
         console.log(
           item?.amount?.toString(),
           item?.tokenMint?.toString(),
           "CHECK THE BALANCE HERE"
         )
       })
-      const val2 = res?.pendingTrades?.map((item) => {
+      const val2 = res?.pendingTrades?.map((item: any) => {
         console.log(
           item?.inputTokenMintWithAmount?.amount?.toString(),
           item?.inputTokenMintWithAmount?.tokenMint?.toString(),
@@ -159,9 +159,9 @@ export class PSService {
       )
 
       try {
-        const tradeBuffer = await this.program.account.tradeBuffer.fetch(
-          tradeBufferAddress
-        )
+        const tradeBuffer = await (
+          this.program.account as any
+        ).tradeBuffer.fetch(tradeBufferAddress)
 
         // You can add your own conditions here
         // For example, check if tradeBuffer.isActive, slotsRemaining > 0, etc.
