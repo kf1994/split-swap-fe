@@ -39,7 +39,6 @@ export const SwapContainer: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const privateSwap = usePrivateSwap()
   const [currentState] = userProfileStore(useShallow((s) => [s.currentState]))
-  console.log(loading, "CHECK SWAP LOADING")
 
   const handleSwap = (): void => {
     // setFromValue(toValue)

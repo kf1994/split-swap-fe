@@ -4,6 +4,7 @@
 import { type AnchorProvider, BN, Program } from "@coral-xyz/anchor"
 import { PrivateSwap } from "@idls"
 import {
+  Connection,
   PublicKey,
   SystemProgram,
   TransactionMessage,
@@ -17,14 +18,17 @@ import {
 import { useAlertStore } from "@store"
 import { tokenService } from "./token-service"
 import BigNumber from "bignumber.js"
+import { SOLANA_RPC } from "@config"
 
 export class PSService {
   readonly program: Program<typeof PrivateSwap>
   readonly magicblockProgram: Program<typeof PrivateSwap>
+  readonly connection: Connection
 
   constructor(provider: AnchorProvider, magicblockProvider: AnchorProvider) {
     this.program = new Program(PrivateSwap, provider)
     this.magicblockProgram = new Program(PrivateSwap, magicblockProvider)
+    this.connection = new Connection(SOLANA_RPC)
   }
 
   // Prefer provider.publicKey when available (as in your codebase),
@@ -48,13 +52,13 @@ export class PSService {
     return pda
   }
 
-  async checkUserBalanceExists(
+  async checkUserBalanceAmount(
     enteredAmount: BN,
     tokenMint: string
-  ): Promise<{ acc: boolean; balance: boolean }> {
+  ): Promise<boolean> {
     try {
       const user = this.userPk
-      if (!user) return { acc: false, balance: false }
+      if (!user) return false
 
       const userBalanceAddress = this.deriveUserBalancePda(user)
       const res = await (
@@ -116,10 +120,26 @@ export class PSService {
       // Step 4: Check if available >= entered
       const isEnough = available.gte(entered)
 
-      return { acc: true, balance: isEnough }
+      return isEnough
     } catch (err) {
       console.error("Error checking user balance:", err)
-      return { acc: false, balance: false }
+      return false
+    }
+  }
+
+  async checkUserBalanceExists(): Promise<boolean> {
+    const user = this.userPk
+    if (!user) return false
+    try {
+      const [userBalanceAddress] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user_balance"), user.toBuffer()],
+        this.program.programId
+      )
+
+      await (this.program.account as any).userBalance.fetch(userBalanceAddress)
+      return true
+    } catch (error) {
+      return false
     }
   }
 
@@ -163,10 +183,16 @@ export class PSService {
           this.program.account as any
         ).tradeBuffer.fetch(tradeBufferAddress)
 
-        // You can add your own conditions here
-        // For example, check if tradeBuffer.isActive, slotsRemaining > 0, etc.
-        // For now, just assume existence means it's available
-        if (tradeBuffer) {
+        if (!tradeBuffer) return null
+
+        const [delegationRecord] = PublicKey.findProgramAddressSync(
+          [Buffer.from("delegation"), tradeBufferAddress.toBuffer()],
+          new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh")
+        )
+
+        const info = await this.connection.getAccountInfo(delegationRecord)
+
+        if (info) {
           console.log(
             `✅ Found available trade buffer at index ${i}`,
             tradeBufferAddress.toString()
@@ -319,14 +345,11 @@ export class PSService {
     try {
       setStep("checkingBalance")
       const amountBN = new BN(Math.floor(Number(amount) * 10 ** decimals))
-      const userBalanceExists = await this.checkUserBalanceExists(
-        amountBN,
-        fromToken
-      )
-      console.log(userBalanceExists, "CHECK USER BALANCE EXIST")
-
-      if (!userBalanceExists?.acc) {
+      const userBalanceExists = await this.checkUserBalanceExists()
+      if (!userBalanceExists) {
+        setStep("creatingAccount")
         await this.createUserBalanceState()
+        await new Promise((resolve) => setTimeout(resolve, 5000))
       }
 
       const availableBuffer = await this.getAvailableTradeBufferFrontend(10)
@@ -360,14 +383,14 @@ export class PSService {
       let balanceReady = false
 
       while (retries < maxRetries) {
-        const check = await this.checkUserBalanceExists(amountBN, fromToken)
+        const check = await this.checkUserBalanceAmount(amountBN, fromToken)
         console.log(
           `Retry #${retries + 1}:`,
           check,
           "Waiting for balance update..."
         )
 
-        if (check?.balance) {
+        if (check) {
           balanceReady = true
           break
         }
@@ -381,33 +404,6 @@ export class PSService {
       }
       // await new Promise((resolve) => setTimeout(resolve, 1500))
       setStep("placingTrade")
-      // const tradeBufferIndex = 10
-      // const trade_buffer_address =
-      //   "9t76R1auSvBYG55kpVNFjWGb7AGTFJPTyyCmZ9KzPF1J"
-      // const val = this.createTradeBuffer(2)
-      // console.log(val, "CHECK THE VALUE OF TRADE BUFFER")
-      // const tradeBufferIndex = 0
-      // const bufferData = await this.createTradeBuffer(9)
-      // console.log(bufferData?.tradeBuffer?.toString(), "CHECK THE DATA HERE")
-
-      // const indexBuf = Buffer.from([tradeBufferIndex & 0xff])
-
-      // const [tradeBuffer] = PublicKey.findProgramAddressSync(
-      //   [Buffer.from("trade_buffer"), indexBuf],
-      //   this.program.programId
-      // )
-      // console.log(tradeBuffer.toString(), "CHECK THE TRADE BUFFER ADDRESS")
-      // const bufferAddress = await this.createTradeBuffer(8)
-      // console.log(
-      //   bufferAddress?.tradeBuffer?.toString(),
-      //   "CHECK THE TRADE BUFFER ADDRESS"
-      // )
-
-      // const tradeBufferIndex = 8
-      // const trade_buffer_address =
-      //   "EfY4SU3zfQgjsVy1dJ9g3cQHa9T55JLqcX4MSobQp3mP"
-      // // const value = await this.createTradeBuffer(6)
-      // // console.log(value?.tradeBuffer?.toString(), "CHECK NEW TRADE BUFFER")
 
       const tradeTx = await this.placeTrade(
         new PublicKey(availableBuffer?.address.toString()),

@@ -65,7 +65,6 @@ export const ActionMainButton = ({
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   function getColorByMode(mode: ActionMainButtonMode) {
-    console.log("MODE==>", mode)
     switch (mode) {
       case "swap":
       case "withdraw":
