@@ -26,6 +26,11 @@ export const ToastNotifier = () => {
     }
 
     switch (step) {
+      case "creatingAccount":
+        content = "🔍 Creating balance account..."
+        options.type = "info"
+        break
+
       case "checkingBalance":
         content = "🔍 Checking user balance..."
         options.type = "info"

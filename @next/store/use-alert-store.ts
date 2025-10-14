@@ -8,6 +8,7 @@ type SwapStep =
   | "placingTrade"
   | "completed"
   | "failed"
+  | "creatingAccount"
 
 interface AlerState {
   loading: boolean
