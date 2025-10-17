@@ -9,6 +9,9 @@ type SwapStep =
   | "completed"
   | "failed"
   | "creatingAccount"
+  | "preparingWithdraw"
+  | "creatingWithdrawalState"
+  | "placingWithdrawal"
 
 interface AlerState {
   loading: boolean

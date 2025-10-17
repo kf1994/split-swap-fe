@@ -50,7 +50,19 @@ export const ToastNotifier = () => {
         content = "📈 Placing trade..."
         options.type = "info"
         break
+      case "preparingWithdraw":
+        content = "📈 Preparing for withdraw..."
+        options.type = "info"
+        break
+      case "creatingWithdrawalState":
+        content = "📈 creating withdrawal state..."
+        options.type = "info"
+        break
 
+      case "placingWithdrawal":
+        content = "📈 placing withdrawal..."
+        options.type = "info"
+        break
       case "completed":
         content = txHash ? (
           <a
