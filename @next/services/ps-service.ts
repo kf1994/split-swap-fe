@@ -53,12 +53,12 @@ export class PSService {
   }
 
   async checkUserBalanceAmount(
-    enteredAmount: BN,
-    tokenMint: string
-  ): Promise<boolean> {
+    tokenMint: string,
+    enteredAmount?: BN
+  ): Promise<{ isAvailable: boolean; availableAmount: null | BN }> {
     try {
       const user = this.userPk
-      if (!user) return false
+      if (!user) return { isAvailable: false, availableAmount: null }
 
       const userBalanceAddress = this.deriveUserBalancePda(user)
       const res = await (
@@ -67,7 +67,9 @@ export class PSService {
       console.log(res, "CHECK RESPONSE FROM BALANCE")
 
       // Convert BN to BigNumber for comparison
-      const entered = new BigNumber(enteredAmount.toString())
+      const entered = enteredAmount
+        ? new BigNumber(enteredAmount.toString())
+        : new BigNumber(0)
       const tokenMintStr = tokenMint
 
       // Step 1: Find total balance
@@ -117,13 +119,21 @@ export class PSService {
           "CHECK THE PENDING BALANCE"
         )
       })
+      let isEnough = false
       // Step 4: Check if available >= entered
-      const isEnough = available.gte(entered)
-
-      return isEnough
+      if (entered.gt(0)) {
+        isEnough = available.gte(entered)
+      }
+      if (entered.eq(0)) {
+        isEnough = available.gt(0)
+      }
+      return {
+        isAvailable: isEnough,
+        availableAmount: new BN(available.toString())
+      }
     } catch (err) {
       console.error("Error checking user balance:", err)
-      return false
+      return { isAvailable: false, availableAmount: null }
     }
   }
 
@@ -168,11 +178,21 @@ export class PSService {
     return { signature, userBalance }
   }
 
+  /**
+   * Find the first trade buffer index that is *available* according to:
+   * - if account exists on Solana and owner === program.programId -> NOT available
+   * - if account exists on Solana and owner === delegation program -> check ER:
+   *    * if magicblockProgram has the same tradeBuffer account -> AVAILABLE
+   *    * else -> NOT available (undelegation)
+   * - else -> NOT available
+   */
   async getAvailableTradeBufferFrontend(
     maxIndex = 10
   ): Promise<{ address: PublicKey; index: number } | null> {
-    for (let i = 0; i < maxIndex; i++) {
+    for (let i = 10; i < maxIndex; i++) {
       const indexBuf = Buffer.from([i & 0xff])
+      console.log(indexBuf?.toString(), "CHECK ON BUFFER")
+
       const [tradeBufferAddress] = PublicKey.findProgramAddressSync(
         [Buffer.from("trade_buffer"), indexBuf],
         this.program.programId
@@ -200,7 +220,9 @@ export class PSService {
           return { address: tradeBufferAddress, index: i }
         }
       } catch (err) {
-        console.log(`❌ No buffer found at index ${i}`)
+        // Defensive: if something unexpected fails, continue searching other indices
+        console.log(`Index ${i}: error while checking:`, err)
+        continue
       }
     }
 
@@ -293,6 +315,169 @@ export class PSService {
     return { signature, tradeBuffer }
   }
 
+  getWithdrawalStateAddress(
+    programId: PublicKey,
+    withdrawalStateIndex: number
+  ): PublicKey {
+    const [withdrawalState] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("withdrawal_state"),
+        Buffer.from([withdrawalStateIndex & 0xff])
+      ],
+      programId
+    )
+    return withdrawalState
+  }
+
+  async checkWithdrawalStateReady(
+    withdrawalStateIndex: number
+  ): Promise<boolean> {
+    try {
+      const [withdrawalState] = PublicKey.findProgramAddressSync(
+        [Buffer.from("withdrawal_state"), Buffer.from([withdrawalStateIndex])],
+        this.program.programId
+      )
+
+      // Try to fetch the withdrawal state account (on mainnet program)
+      await (this.program.account as any).withdrawalState.fetch(withdrawalState)
+
+      // Check delegated record presence on delegation program
+      const delegationProgramPk = new PublicKey(
+        "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+      )
+      const [delegationRecord] = PublicKey.findProgramAddressSync(
+        [Buffer.from("delegation"), withdrawalState.toBuffer()],
+        delegationProgramPk
+      )
+
+      const accountInfo = await this.program.provider.connection.getAccountInfo(
+        delegationRecord
+      )
+      console.log(accountInfo, "CHECK ACCOUNT INFO")
+
+      return !!accountInfo
+    } catch (err) {
+      // either withdrawalState doesn't exist or delegation missing
+      return false
+    }
+  }
+
+  async createWithdrawalState(
+    withdrawalStateIndex: number
+  ): Promise<null | { signature: string; withdrawalState: PublicKey }> {
+    const user = this.userPk
+    if (!user) return null
+
+    const withdrawalState = this.getWithdrawalStateAddress(
+      this.program.programId,
+      withdrawalStateIndex
+    )
+
+    const sig = await this.program.methods
+      .delegateWithdrawalState(withdrawalStateIndex)
+      .accounts({
+        payer: user,
+        withdrawalState,
+        systemProgram: SystemProgram.programId,
+        ownerProgram: this.program.programId,
+        delegationProgram: new PublicKey(
+          "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        )
+      })
+      .rpc()
+
+    return { signature: sig, withdrawalState }
+  }
+
+  async getUserTokenBalanceOnEr(tokenMint: PublicKey): Promise<BN> {
+    const trader = this.magicUserPk
+    if (!trader) return new BN(0)
+
+    try {
+      const [userBalanceAddr] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user_balance"), trader.toBuffer()],
+        this.magicblockProgram.programId
+      )
+
+      const res =
+        (await (
+          this.magicblockProgram.account as any
+        ).userBalance.fetchNullable?.(userBalanceAddr)) ??
+        (await (this.magicblockProgram.account as any).userBalance
+          .fetch(userBalanceAddr)
+          .catch(() => null))
+
+      if (!res) return new BN(0)
+
+      const found = res.balances?.find(
+        (b: any) => b.tokenMint?.toString() === tokenMint.toString()
+      )
+      const amt = found?.amount ? new BN(found.amount.toString()) : new BN(0)
+      return amt
+    } catch (err) {
+      console.error("getUserTokenBalanceOnEr error:", err)
+      return new BN(0)
+    }
+  }
+
+  async placeWithdrawal(
+    withdrawalStateIndex: number,
+    withdrawalTokenMint: PublicKey,
+    withdrawalAmount: BN,
+    receivers: PublicKey[]
+  ): Promise<string | null> {
+    const trader = this.magicUserPk
+    if (!trader) return null
+
+    if (receivers.length === 0 || receivers.length > 10) {
+      throw new Error("Receivers array must have between 1 and 10 addresses")
+    }
+
+    const [globalState] = PublicKey.findProgramAddressSync(
+      [Buffer.from("global_state")],
+      this.magicblockProgram.programId
+    )
+    const [userBalance] = PublicKey.findProgramAddressSync(
+      [Buffer.from("user_balance"), trader.toBuffer()],
+      this.magicblockProgram.programId
+    )
+    const [withdrawalState] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("withdrawal_state"),
+        Buffer.from([withdrawalStateIndex & 0xff])
+      ],
+      this.magicblockProgram.programId
+    )
+    console.log(
+      withdrawalStateIndex,
+      withdrawalTokenMint.toString(),
+      withdrawalAmount.toString(),
+      receivers[0].toString(),
+      trader?.toString(),
+      userBalance?.toString(),
+      globalState.toString(),
+      withdrawalState?.toString(),
+      "CHECK VALUES ON WITHDRAWL"
+    )
+
+    const tx = await this.magicblockProgram.methods
+      .placeWithdrawal(
+        withdrawalStateIndex,
+        withdrawalTokenMint,
+        withdrawalAmount,
+        receivers
+      )
+      .accounts({
+        trader,
+        userBalance,
+        globalState,
+        withdrawalState
+      })
+      .rpc()
+
+    return tx
+  }
+
   async placeTrade(
     tradeBuffer: PublicKey,
     tradeBufferIndex: number,
@@ -352,45 +537,39 @@ export class PSService {
         await new Promise((resolve) => setTimeout(resolve, 5000))
       }
 
-      const availableBuffer = await this.getAvailableTradeBufferFrontend(10)
+      const availableBuffer = await this.getAvailableTradeBufferFrontend(20)
 
       if (!availableBuffer) {
         throw new Error("No available trade buffer found.")
       }
-      console.log(amountBN?.toNumber(), "CHECK VALUE")
-      console.log(
-        availableBuffer?.address?.toString(),
-        availableBuffer?.index,
-        "CHECK AVAILABLE TRADE BUFFER"
-      )
-      // const availableBuffer = await tokenService?.getAvailableBuffer()
-      console.log(availableBuffer, "CHECK AVAIULABLE BUFFER")
 
       setStep("depositing")
+      // const newVal = await this.createTradeBuffer(13)
+      // console.log(newVal?.tradeBuffer.toString(), "CHECK NEW TRADE BUFFER")
+
       const depositTx = await this.depositOnL1(
         new PublicKey(fromToken),
         amountBN,
         new BN(Date.now())
       )
-      // await new Promise((resolve) => setTimeout(resolve, 5000))
       setStep("waitingBalance", depositTx)
-      // console.log("Deposit:", depositTx)
 
-      // Wait until user's deposited balance becomes available
-      const maxRetries = 15
-      const retryDelay = 5000 // 4 seconds between checks
+      // // Wait until user's deposited balance becomes available
+      const maxRetries = 20
+      const retryDelay = 5000
       let retries = 0
       let balanceReady = false
+      let availableBalance = new BN(0)
 
       while (retries < maxRetries) {
-        const check = await this.checkUserBalanceAmount(amountBN, fromToken)
+        const check = await this.checkUserBalanceAmount(fromToken, amountBN)
         console.log(
           `Retry #${retries + 1}:`,
           check,
           "Waiting for balance update..."
         )
 
-        if (check) {
+        if (check.isAvailable) {
           balanceReady = true
           break
         }
@@ -402,7 +581,7 @@ export class PSService {
       if (!balanceReady) {
         throw new Error("Balance not updated after deposit.")
       }
-      // await new Promise((resolve) => setTimeout(resolve, 1500))
+
       setStep("placingTrade")
 
       const tradeTx = await this.placeTrade(
@@ -413,103 +592,67 @@ export class PSService {
         amountBN,
         slippageBps
       )
+      retries = 0
+      balanceReady = false
+      availableBalance = new BN(0)
 
-      setStep("completed", tradeTx)
-      return tradeTx
+      while (retries < maxRetries) {
+        const check = await this.checkUserBalanceAmount(toToken)
+        console.log(
+          `Retry #${retries + 1}:`,
+          check,
+          "Waiting for balance update..."
+        )
+
+        if (check.isAvailable) {
+          balanceReady = true
+        }
+        if (check.availableAmount && check.availableAmount?.toNumber() > 0) {
+          availableBalance = check.availableAmount
+          break
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        retries++
+      }
+      console.log(availableBalance?.toString(), "CHECK AVAILABLE BALANCE")
+
+      if (!balanceReady) {
+        throw new Error("Balance not updated after place trade.")
+      }
+      setStep("preparingWithdraw")
+      const withdrawalStateIndex = 2
+      // // --- NEW: Withdraw phase (attempt to withdraw output token balance from ER) ---
+      const isReady = await this.checkWithdrawalStateReady(withdrawalStateIndex)
+      if (!isReady) {
+        setStep("creatingWithdrawalState")
+        await this.createWithdrawalState(withdrawalStateIndex)
+        // small pause to allow records to propagate
+        await new Promise((r) => setTimeout(r, 2000))
+      }
+      // const outputBalance = await this.getUserTokenBalanceOnEr(
+      //   new PublicKey(toToken)
+      // )
+      // console.log(outputBalance.toString(), "CHECK OUTPUT BALANCE")
+
+      // const outputBalance = new BN(22000)
+      setStep("placingWithdrawal")
+      const magicUser = this.magicUserPk
+      if (!magicUser) throw new Error("Magicblock user wallet not available")
+
+      const receivers = [magicUser] // single receiver; change if needed
+      const withdrawalTx = await this.placeWithdrawal(
+        withdrawalStateIndex,
+        new PublicKey(toToken),
+        availableBalance,
+        receivers
+      )
+
+      setStep("completed", withdrawalTx)
+      return withdrawalTx
     } catch (err) {
       setStep("failed")
       console.error("Swap error:", err)
       return null
     }
   }
-
-  // async sendTransaction(tx: VersionedTransaction): Promise<string> {
-  //   const provider = this.magicblockProgram.provider
-  //   const latestBlockHash = await provider.connection.getLatestBlockhash()
-  //   const serializeTx2 = VersionedTransaction.deserialize(tx.serialize())
-  //   serializeTx2.message.recentBlockhash = latestBlockHash.blockhash
-  //   const transactionSimulation = await provider.connection.simulateTransaction(
-  //     tx,
-  //     {
-  //       replaceRecentBlockhash: true
-  //     }
-  //   )
-
-  //   const transactionLogs = transactionSimulation.value.logs
-
-  //   console.log(transactionLogs, "transactionLogs")
-  //   if (!provider.publicKey) return ""
-  //   let signature = null
-  //   let regularWalletSignedTx = null
-
-  //    const signedTx = await wallet.signAllTransactions?.([tx])
-  //   if (!signedTx) {
-  //     throw new Error("Transaction Simulation Failed")
-  //   }
-  //   regularWalletSignedTx = signedTx
-  //   signature = encode(signedTx[0].signatures[0] as Uint8Array)
-  //   // }
-
-  //   const infoForSentry = {
-  //     walletAddress: provider.publicKey?.toBase58(),
-  //     deviceUsed: userDevice,
-  //     ...txDetailsForSentry
-  //   }
-
-  //   console.log("transactionLogs", transactionLogs)
-
-  //   if (regularWalletSignedTx) {
-  //     try {
-  //       let transactions = [
-  //         encode(regularWalletSignedTx[0]?.serialize()),
-  //         encode(regularWalletSignedTx[1]?.serialize())
-  //       ]
-  //       if (tx2) {
-  //         transactions = [
-  //           encode(regularWalletSignedTx[0]?.serialize()),
-  //           encode(regularWalletSignedTx[1]?.serialize()),
-  //           encode(regularWalletSignedTx[2]?.serialize())
-  //         ]
-  //       }
-  //       const sendBundle = async () => {
-  //         await axios.post(
-  //           `${process.env.NEXT_PUBLIC_API_HOST}/tokens/send-bundle-array`,
-  //           {
-  //             jsonrpc: "2.0",
-  //             id: 1,
-  //             method: "sendBundle",
-  //             transactions
-  //           }
-  //         )
-  //         // await axios.post("https://mainnet.block-engine.jito.wtf/api/v1/bundles", {
-  //         //   jsonrpc: "2.0",
-  //         //   id: 1,
-  //         //   method: "sendBundle",
-  //         //   params: transactions
-  //         // })
-  //       }
-  //       if (!tx2) {
-  //         await connection.sendRawTransaction(
-  //           regularWalletSignedTx[0].serialize(),
-  //           {
-  //             skipPreflight: true
-  //           }
-  //         )
-  //       }
-  //       const RETRIES = 3
-  //       for (let attempt = 1; attempt <= RETRIES; attempt++) {
-  //         try {
-  //           await sendBundle()
-  //         } catch (e) {
-  //           if (attempt < RETRIES) {
-  //             console.error(`Attempt ${attempt} failed. Retrying...`)
-  //             setTimeout(() => {}, 1000)
-  //             continue
-  //           }
-  //           console.error(e)
-  //         }
-  //       }
-  //     } catch (error) {}
-  //   }
-  // }
 }
