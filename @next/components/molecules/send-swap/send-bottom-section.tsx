@@ -4,8 +4,14 @@ import { useEffect, useRef, useState } from "react"
 import { SendWalletInput } from "./send-wallet-input"
 import { PublicKey } from "@solana/web3.js"
 import Papa from "papaparse"
-import { CustomButton } from "@atoms"
+import { ActionMainButton, CustomButton } from "@atoms"
 import { Tooltip } from "../../atoms/custom-tooltip"
+import { userProfileStore } from "@store"
+import { useShallow } from "zustand/react/shallow"
+import { usePrivateSwap } from "@next/providers"
+import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { useTokenBalance } from "@hooks"
 
 interface Wallet {
   id: number
@@ -14,14 +20,25 @@ interface Wallet {
   error?: string
 }
 
-export const SendBottomSection: React.FC = () => {
+interface SendBottomSectionProps {
+  toValue: string
+}
+export const SendBottomSection: React.FC<SendBottomSectionProps> = ({
+  toValue
+}) => {
+  const { connected } = useWallet()
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [initialAddress, setInitialAddress] = useState<string>("")
   const [initialError, setInitialError] = useState<string>("")
   const [loading, setLoading] = useState(false)
+  const [swapLoading, setSwapLoading] = useState(false)
+  const [send, walletAddress] = userProfileStore(
+    useShallow((s) => [s.send, s.walletAddress])
+  )
   const [progress, setProgress] = useState(0)
+  const { balance } = useTokenBalance(walletAddress, send.from.address)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-
+  const privateSwap = usePrivateSwap()
   const [distributionEnabled, setDistributionEnabled] = useState(false)
 
   const applyDistribution = (count: number): void => {
@@ -184,8 +201,52 @@ export const SendBottomSection: React.FC = () => {
     (sum, w) => sum + (parseFloat(w.percentage) || 0),
     0
   )
-  const isSwapDisabled = hasInvalidAddress || totalPercentage > 100
+  const isSwapDisabled =
+    hasInvalidAddress ||
+    // totalPercentage > 100 ||
+    (wallets.length === 0 ? !initialAddress : wallets.length === 0)
+  const actionMainButtonMode = getActionMainButtonMode({
+    isOnline: true,
+    connected,
+    confirming: false,
+    solInput: toValue?.toString(),
+    maxAvailableFunds: balance ?? 0,
+    loading: loading || swapLoading,
+    disabled: isSwapDisabled
+  })
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const swapHandler = async () => {
+    let receiverWallet = []
+    if (wallets?.length === 0 && initialAddress) {
+      receiverWallet = [
+        { address: new PublicKey(initialAddress), percentage: "100.00" }
+      ]
+    } else {
+      receiverWallet = wallets.map((item) => ({
+        address: new PublicKey(item?.address),
+        percentage: item?.percentage
+      }))
+    }
+
+    try {
+      if (send.from && send.to && walletAddress) {
+        setSwapLoading(true)
+        await privateSwap.integratePrivateSwap(
+          send.from.address,
+          send.to.address,
+          toValue,
+          send.from.decimals ?? 6,
+          walletAddress,
+          undefined,
+          receiverWallet
+        )
+        setSwapLoading(false)
+      }
+    } catch (error) {
+      setSwapLoading(false)
+    }
+  }
   return (
     <div>
       <div className="bg-[#383D56] mt-[6px] flex flex-col gap-2 rounded-xl p-4 w-full">
@@ -324,14 +385,13 @@ export const SendBottomSection: React.FC = () => {
           + Add more receiving wallets
         </button>
       </div>
-
-      <CustomButton
-        disabled={isSwapDisabled}
-        variant={"linear-blue"}
+      <ActionMainButton
+        actionMainButtonMode={actionMainButtonMode}
+        loading={loading || swapLoading}
         className="w-full flex justify-center items-center mt-6 px-6 py-4 rounded-xl"
-      >
-        <p className={"text-[16px] font-bold"}>Swap</p>
-      </CustomButton>
+        labelClassName={"text-white text-[16px] font-bold"}
+        swap={swapHandler}
+      />
     </div>
   )
 }

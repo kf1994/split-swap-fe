@@ -74,7 +74,7 @@ export const SendBlock: React.FC = () => {
       />
 
       {/* Receiving wallets & distribution */}
-      <SendBottomSection />
+      <SendBottomSection toValue={toValue} />
     </div>
   )
 }

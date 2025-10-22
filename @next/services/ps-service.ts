@@ -5,13 +5,21 @@ import { type AnchorProvider, BN, Program } from "@coral-xyz/anchor"
 import { PrivateSwap } from "@idls"
 import {
   Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
+  sendAndConfirmTransaction,
   SystemProgram,
+  Transaction,
   TransactionMessage,
   VersionedTransaction
 } from "@solana/web3.js"
 import {
+  createAssociatedTokenAccountInstruction,
+  createSyncNativeInstruction,
+  getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
+  NATIVE_MINT,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token"
@@ -19,7 +27,11 @@ import { useAlertStore } from "@store"
 import { tokenService } from "./token-service"
 import BigNumber from "bignumber.js"
 import { SOLANA_RPC } from "@config"
+import { stringToNumber } from "@next/utils/string-to-number"
 
+const WRAPPED_SOL_MINT = new PublicKey(
+  "So11111111111111111111111111111111111111112"
+)
 export class PSService {
   readonly program: Program<typeof PrivateSwap>
   readonly magicblockProgram: Program<typeof PrivateSwap>
@@ -61,6 +73,12 @@ export class PSService {
       if (!user) return { isAvailable: false, availableAmount: null }
 
       const userBalanceAddress = this.deriveUserBalancePda(user)
+      console.log(userBalanceAddress.toString(), "CHECK USER ADDRESS")
+      console.log(
+        this.magicblockProgram.provider.connection.rpcEndpoint,
+        "CHECK ACCOUNT DETAIl"
+      )
+
       const res = await (
         this.magicblockProgram.account as any
       ).userBalance.fetch(userBalanceAddress)
@@ -424,15 +442,16 @@ export class PSService {
     withdrawalStateIndex: number,
     withdrawalTokenMint: PublicKey,
     withdrawalAmount: BN,
-    receivers: PublicKey[]
+    receivers: Array<{ address: PublicKey; percentage: string }>
   ): Promise<string | null> {
     const trader = this.magicUserPk
     if (!trader) return null
 
-    if (receivers.length === 0 || receivers.length > 10) {
+    if (!receivers || receivers.length === 0 || receivers.length > 10) {
       throw new Error("Receivers array must have between 1 and 10 addresses")
     }
 
+    // Prepare PDA addresses
     const [globalState] = PublicKey.findProgramAddressSync(
       [Buffer.from("global_state")],
       this.magicblockProgram.programId
@@ -448,34 +467,67 @@ export class PSService {
       ],
       this.magicblockProgram.programId
     )
+
     console.log(
       withdrawalStateIndex,
       withdrawalTokenMint.toString(),
       withdrawalAmount.toString(),
-      receivers[0].toString(),
       trader?.toString(),
       userBalance?.toString(),
       globalState.toString(),
       withdrawalState?.toString(),
-      "CHECK VALUES ON WITHDRAWL"
+      "CHECK VALUES ON WITHDRAWAL"
     )
 
-    const tx = await this.magicblockProgram.methods
-      .placeWithdrawal(
-        withdrawalStateIndex,
-        withdrawalTokenMint,
-        withdrawalAmount,
-        receivers
-      )
-      .accounts({
-        trader,
-        userBalance,
-        globalState,
-        withdrawalState
-      })
-      .rpc()
+    // --- Create transaction ---
+    const tx = new Transaction()
 
-    return tx
+    // --- Add an instruction per receiver ---
+    for (const receiver of receivers) {
+      const percent = stringToNumber(receiver.percentage)
+      if (isNaN(percent) || percent <= 0) continue
+
+      // Calculate proportional amount for each receiver
+      const portionAmount = withdrawalAmount
+        .mul(new BN(Math.floor(percent * 100)))
+        .div(new BN(10000)) // handle up to 2 decimal percentage safely
+
+      if (portionAmount.lte(new BN(0))) continue
+
+      console.log(
+        `Adding withdrawal instruction for ${receiver.address.toString()} with ${percent}% => ${portionAmount.toString()}`
+      )
+
+      // Build instruction for each receiver
+      const ix = await this.magicblockProgram.methods
+        .placeWithdrawal(
+          withdrawalStateIndex,
+          withdrawalTokenMint,
+          portionAmount,
+          [receiver.address] // single receiver per call
+        )
+        .accounts({
+          trader,
+          userBalance,
+          globalState,
+          withdrawalState
+        })
+        .instruction()
+
+      // Add to transaction
+      tx.add(ix)
+    }
+
+    if (tx.instructions.length === 0) {
+      throw new Error("No valid withdrawal instructions created")
+    }
+
+    // --- Send transaction to wallet for signing ---
+    const provider = this.magicblockProgram.provider as any
+    const txSig = await provider.sendAndConfirm(tx)
+
+    console.log("Combined withdrawal transaction:", txSig)
+    return txSig
   }
 
   async placeTrade(
@@ -517,13 +569,43 @@ export class PSService {
     return await method.rpc({ skipPreflight: true })
   }
 
+  async wrapSol(
+    connection: Connection,
+    walletKey: PublicKey
+  ): Promise<PublicKey> {
+    const associatedTokenAccount = await getAssociatedTokenAddress(
+      NATIVE_MINT,
+      walletKey
+    )
+
+    const wrapTransaction = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        walletKey,
+        associatedTokenAccount,
+        walletKey,
+        NATIVE_MINT
+      ),
+      SystemProgram.transfer({
+        fromPubkey: walletKey,
+        toPubkey: associatedTokenAccount,
+        lamports: LAMPORTS_PER_SOL
+      }),
+      createSyncNativeInstruction(associatedTokenAccount)
+    )
+    await (this.program.provider as any).sendAndConfirm(wrapTransaction)
+
+    console.log("✅ - Step 2: SOL wrapped")
+    return associatedTokenAccount
+  }
+
   async integratePrivateSwap(
     fromToken: string,
     toToken: string,
     amount: string,
     decimals: number,
     userAddress: string,
-    slippageBps: number = 100
+    slippageBps: number = 100,
+    receiverWallet?: Array<{ address: PublicKey; percentage: string }>
   ): Promise<string | null> {
     const { setStep } = useAlertStore.getState()
 
@@ -553,6 +635,7 @@ export class PSService {
         new BN(Date.now())
       )
       setStep("waitingBalance", depositTx)
+      console.log(depositTx, "CHECK THE DEPOSIT TX")
 
       // // Wait until user's deposited balance becomes available
       const maxRetries = 20
@@ -592,10 +675,11 @@ export class PSService {
         amountBN,
         slippageBps
       )
+      setStep("waitingBalance", tradeTx)
       retries = 0
       balanceReady = false
       availableBalance = new BN(0)
-
+      console.log(tradeTx, "CHECK THE Trade TX")
       while (retries < maxRetries) {
         const check = await this.checkUserBalanceAmount(toToken)
         console.log(
@@ -638,8 +722,10 @@ export class PSService {
       setStep("placingWithdrawal")
       const magicUser = this.magicUserPk
       if (!magicUser) throw new Error("Magicblock user wallet not available")
-
-      const receivers = [magicUser] // single receiver; change if needed
+      let receivers = [{ address: magicUser, percentage: "100.00" }]
+      if (receiverWallet && receiverWallet.length > 0) {
+        receivers = receiverWallet
+      }
       const withdrawalTx = await this.placeWithdrawal(
         withdrawalStateIndex,
         new PublicKey(toToken),
