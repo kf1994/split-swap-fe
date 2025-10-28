@@ -537,7 +537,11 @@ export class PSService {
         await new Promise((resolve) => setTimeout(resolve, 5000))
       }
 
-      const availableBuffer = await this.getAvailableTradeBufferFrontend(20)
+      // const availableBuffer = await this.getAvailableTradeBufferFrontend(20)
+      const availableBuffer = {
+        address: new PublicKey("8Ampuf3a6dfDHATxrBPAH7X4TD9tUiKj9Um9NEZGVHtN"),
+        index: 22
+      }
 
       if (!availableBuffer) {
         throw new Error("No available trade buffer found.")
