@@ -265,36 +265,55 @@ export const SendBottomSection: React.FC = () => {
         )}
 
         {wallets.length >= 1 && (
-          <div className="bg-[#444A66] px-4 py-3 rounded-xl flex justify-between items-center text-white text-sm">
-            <span>Distribution</span>
-            <div className="flex items-center gap-2">
-              <span className={"text-[#A6A0BB] text-[16px]  font-normal"}>
-                Randomized
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  toggleDistribution()
-                }}
-                className={`w-[28px] h-4 flex items-center rounded-full transition-colors duration-300 ${
-                  distributionEnabled ? "bg-[#7B61FF]" : "bg-gray-500"
-                }`}
-              >
-                <span
-                  className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                    distributionEnabled ? "translate-x-4" : "translate-x-0"
+          <div className={"flex flex-col gap-3"}>
+            <div className="bg-[#444A66] px-4 py-3 rounded-xl flex justify-between items-center text-white text-sm ">
+              <span>Distribution</span>
+              <div className="flex items-center gap-2">
+                <span className={"text-[#A6A0BB] text-[16px]  font-normal"}>
+                  Randomized
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleDistribution()
+                  }}
+                  className={`w-[28px] h-4 flex items-center rounded-full transition-colors duration-300 ${
+                    distributionEnabled ? "bg-[#7B61FF]" : "bg-gray-500"
                   }`}
-                />
-              </button>
-              <span>%</span>
+                >
+                  <span
+                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                      distributionEnabled ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+                <span>%</span>
+              </div>
+              {/* Add wallet button */}
+
             </div>
+            <button
+              onClick={addWallet}
+              className="
+                  w-full text-start text-sm text-[#A6A0BB] mt-2 cursor-pointer
+                  hover:text-white relative overflow-hidden
+                  active:scale-[0.96]
+                  transition-all duration-150 ease-out
+                "
+            >
+              + Add more receiving wallets
+            </button>
+
           </div>
         )}
 
         {/* Wallet list */}
         <div className="max-h-64 overflow-y-auto smart-scroll rounded-lg">
-          {wallets.map((w) => (
-            <div key={w.id}>
+          {wallets
+            .slice()
+            .reverse()
+            .map((w) => (
+              <div key={w.id}>
               <SendWalletInput
                 address={w.address}
                 percentage={w.percentage}
@@ -314,15 +333,8 @@ export const SendBottomSection: React.FC = () => {
               )}
             </div>
           ))}
-        </div>
+      </div>
 
-        {/* Add wallet button */}
-        <button
-          onClick={addWallet}
-          className="w-full text-start text-sm text-[#A6A0BB] mt-2"
-        >
-          + Add more receiving wallets
-        </button>
       </div>
 
       <CustomButton
