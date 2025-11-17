@@ -12,6 +12,14 @@ import { usePrivateSwap } from "../../../../providers"
 import { useTokenBalance, useUsdPrice } from "@hooks"
 import { getActionMainButtonMode } from "@next/utils/get-action-main-button-mode"
 import { useWallet } from "@solana/wallet-adapter-react"
+import { Poppins } from "next/font/google"
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  style: ["normal"],
+  weight: ["400", "700"],
+  display: "swap"
+})
 
 export const SwapContainer: React.FC = () => {
   const router = useRouter()
@@ -84,21 +92,37 @@ export const SwapContainer: React.FC = () => {
     }
   }
   return (
-    <>
-      {currentState === "1" && (
-        <div className="rounded-2xl p-6 w-[343px] md:w-[530px] mx-auto swap-container">
-          {/* Tabs */}
-          <div className="flex gap-6">
-            <button
-              onClick={() => {
-                handleTabClick("swap")
-              }}
-              className={`pb-1.5 text-[20px] sm:text-[22px] font-bold transition ${
-                activeTab === "swap" ? "text-white" : "text-[#A6A0BB]"
-              }`}
-            >
-              Swap
-            </button>
+    <div className={"flex w-full flex-col gap-10 justify-center items-center"}>
+      <div className={"flex justify-center w-[343px] md:w-[530px] mx-auto"}>
+        <div className={"flex flex-col  items-center justify-center"}>
+          <div className={`flex gap-2 items-center`}>
+            <span className={`text-[20px] font-normal text-white ${poppins.className}`}>Send</span>
+            <span className={`text-[20px] font-normal text-white ${poppins.className}`}>|</span>
+            <span className={`text-[20px] font-normal text-white ${poppins.className}`}>Swap</span>
+            <span className={`text-[20px] font-normal text-white ${poppins.className}`}>|</span>
+            <span className={`text-[20px] font-normal text-white ${poppins.className}`}>Split</span>
+          </div>
+
+          <h1 className={`text-[32px] font-bold  text-white tracking-tight ${poppins.className}`}>
+            Privacy made easy.
+          </h1>
+        </div>
+      </div>
+      {
+        currentState === "1" && (
+          <div className="rounded-2xl p-6 w-[343px] md:w-[530px] mx-auto swap-container">
+            {/* Tabs */}
+            <div className="flex gap-6">
+              <button
+                onClick={() => {
+                  handleTabClick("swap")
+                }}
+                className={`pb-1.5 text-[20px] sm:text-[22px] font-bold transition ${
+                  activeTab === "swap" ? "text-white" : "text-[#A6A0BB]"
+            }`}
+          >
+            Swap
+          </button>
             <button
               onClick={() => {
                 handleTabClick("send")
@@ -161,6 +185,6 @@ export const SwapContainer: React.FC = () => {
         </div>
       )}
       {currentState === "2" && <TokensList />}
-    </>
+    </div>
   )
 }
